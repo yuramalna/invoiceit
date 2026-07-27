@@ -27,7 +27,7 @@ The canonical values live in `Hours Design System/tokens/colors.css`.
 - The system uses a 4px base grid.
 - Desktop uses a 232px sidebar, 60px top bar, 40px page gutter, and an optional 300px detail rail.
 - Related controls use 8–16px gaps; major blocks use 32–64px separation.
-- Data tables remain ledger-like on wide screens and become readable record groups on narrow screens.
+- Data tables remain ledger-like on wide screens and become readable record groups on narrow screens. The Entries ledger keeps date as an explicit row field; day grouping is reserved for the Today timeline.
 - Mobile replaces the sidebar with a persistent bottom navigation and keeps the timer within easy reach.
 
 ## Shape and elevation

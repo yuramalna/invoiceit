@@ -295,20 +295,20 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
     setPage((current) => Math.min(current, totalPages));
   }, [totalPages]);
 
-  const rows = [];
-  groupEntries(pagedEntries).forEach((group) => {
-    rows.push({ __group: group.day });
-    group.items.forEach((entry) => rows.push({ ...viewEntry(entry, clients), __entry: entry }));
-  });
+  const rows = pagedEntries.map((entry) => ({
+    ...viewEntry(entry, clients),
+    __entry: entry,
+  }));
 
   const columns = [
     { key: 'pick', label: '', width: 46 },
+    { key: 'date', label: 'Date', width: 106 },
     { key: 'task', label: 'Task' },
-    { key: 'client', label: 'Client', width: 210 },
-    { key: 'span', label: 'Span', width: 130 },
-    { key: 'seconds', label: 'Hours', numeric: true, width: 80 },
-    { key: 'amount', label: 'Amount', numeric: true, width: 110 },
-    { key: 'actions', label: '', width: 112 },
+    { key: 'client', label: 'Client', width: 180 },
+    { key: 'span', label: 'Span', width: 112 },
+    { key: 'seconds', label: 'Hours', numeric: true, width: 72 },
+    { key: 'amount', label: 'Amount', numeric: true, width: 100 },
+    { key: 'actions', label: '', width: 104 },
   ];
   const renderCell = (column, row) => {
     if (column.key === 'pick') {
@@ -320,6 +320,13 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
             event.target.checked ? [...current, row.id] : current.filter((id) => id !== row.id),
           )}
         />
+      );
+    }
+    if (column.key === 'date') {
+      return (
+        <span className="entry-date">
+          {formatDate(row.start, { day: '2-digit', month: 'short', year: 'numeric' })}
+        </span>
       );
     }
     if (column.key === 'task') {
