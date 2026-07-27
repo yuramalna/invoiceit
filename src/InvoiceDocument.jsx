@@ -10,7 +10,11 @@ import {
   getProject,
 } from './utils.js';
 
-const { Badge, Button } = window.HoursDesignSystem_76f0a9;
+const {
+  Badge,
+  Button,
+  Select,
+} = window.HoursDesignSystem_76f0a9;
 
 function statusLabel(status) {
   return {
@@ -44,8 +48,9 @@ export default function InvoiceDocument({
   entries,
   clients,
   settings,
-  onMarkSent,
-  onMarkPaid,
+  onStatusChange,
+  onEdit,
+  onDelete,
   onPrint,
 }) {
   const client = getClient(clients, invoice.clientId) || clients[0];
@@ -98,17 +103,25 @@ export default function InvoiceDocument({
           </Badge>
         </div>
         <div className="invoice-toolbar__actions">
-          <Button size="sm" icon="Download" onClick={onPrint}>PDF</Button>
+          <div className="invoice-toolbar__status">
+            <Select
+              size="sm"
+              aria-label={`Status for invoice ${invoice.number}`}
+              value={invoice.status}
+              onChange={(event) => onStatusChange(event.target.value)}
+              options={[
+                { value: 'draft', label: 'Draft' },
+                { value: 'pending', label: 'Sent' },
+                { value: 'paid', label: 'Paid' },
+                { value: 'overdue', label: 'Overdue' },
+              ]}
+            />
+          </div>
           {invoice.status === 'draft' ? (
-            <Button size="sm" variant="primary" icon="Send" onClick={onMarkSent}>
-              Mark as sent
-            </Button>
+            <Button size="sm" icon="Pencil" onClick={onEdit}>Edit draft</Button>
           ) : null}
-          {invoice.status === 'pending' || invoice.status === 'overdue' ? (
-            <Button size="sm" variant="primary" icon="Check" onClick={onMarkPaid}>
-              Mark as paid
-            </Button>
-          ) : null}
+          <Button size="sm" icon="Download" onClick={onPrint}>PDF</Button>
+          <Button size="sm" variant="danger" icon="Trash2" onClick={onDelete}>Delete</Button>
         </div>
       </div>
       <article className="invoice-sheet">

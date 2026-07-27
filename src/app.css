@@ -504,6 +504,19 @@ textarea {
   gap: var(--space-2);
 }
 
+.invoice-toolbar__actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.invoice-toolbar__status {
+  width: 104px;
+}
+
+.invoice-toolbar__status .hrs-select {
+  width: 100%;
+}
+
 .invoice-sheet {
   display: flex;
   flex-direction: column;
@@ -1077,6 +1090,15 @@ textarea {
   font-size: 12px;
   line-height: 1.45;
   background: var(--status-info-bg);
+  border-radius: var(--radius-md);
+}
+
+.dialog-error {
+  padding: var(--space-3);
+  color: var(--rust-500);
+  font-size: 12px;
+  line-height: 1.45;
+  background: var(--status-overdue-bg);
   border-radius: var(--radius-md);
 }
 

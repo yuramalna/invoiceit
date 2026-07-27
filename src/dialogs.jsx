@@ -337,14 +337,43 @@ export function ClientDialog({ client, clients, defaultCurrency, defaultRate, on
   );
 }
 
-export function InvoiceDialog({ clients, entries, settings, selectedIds = [], onClose, onCreate }) {
-  const eligible = entries.filter((entry) => entry.billable && !entry.invoiced && !entry.running);
-  const selectedClient = eligible.find((entry) => selectedIds.includes(entry.id))?.clientId || eligible[0]?.clientId || clients[0]?.id;
+export function InvoiceDialog({
+  invoice,
+  clients,
+  entries,
+  settings,
+  selectedIds = [],
+  onClose,
+  onSubmit,
+}) {
+  const currentEntryIds = invoice?.entryIds || [];
+  const eligible = entries.filter((entry) =>
+    !entry.running
+    && (currentEntryIds.includes(entry.id) || (entry.billable && !entry.invoiced)),
+  );
+  const selectedClient = invoice?.clientId
+    || eligible.find((entry) => selectedIds.includes(entry.id))?.clientId
+    || eligible[0]?.clientId
+    || clients[0]?.id;
+  const initialIssued = invoice?.issued || localDate();
+  const initialClient = getClient(clients, selectedClient);
+  const initialDue = invoice?.due || (() => {
+    const due = new Date(`${initialIssued}T12:00:00`);
+    due.setDate(due.getDate() + (initialClient?.terms ?? 14));
+    return localDate(due);
+  })();
   const [clientId, setClientId] = React.useState(selectedClient);
   const [billingProfileId, setBillingProfileId] = React.useState(
-    settings.defaultBillingProfileId || settings.billingProfiles?.[0]?.id || '',
+    invoice?.billingProfileId
+      || settings.defaultBillingProfileId
+      || settings.billingProfiles?.[0]?.id
+      || '',
   );
-  const [picked, setPicked] = React.useState(() => selectedIds.filter((id) => eligible.some((entry) => entry.id === id)));
+  const [picked, setPicked] = React.useState(() =>
+    (invoice?.entryIds || selectedIds).filter((id) => eligible.some((entry) => entry.id === id)),
+  );
+  const [issued, setIssued] = React.useState(initialIssued);
+  const [due, setDue] = React.useState(initialDue);
   const [error, setError] = React.useState('');
   const client = getClient(clients, clientId);
   const billingProfile = getBillingProfile(settings, billingProfileId);
@@ -359,19 +388,34 @@ export function InvoiceDialog({ clients, entries, settings, selectedIds = [], on
   const taxRate = Number(billingProfile?.taxRate) || 0;
   const total = subtotal + ((subtotal * taxRate) / 100);
 
-  const create = () => {
+  const submit = () => {
     if (!picked.length) {
       setError('Select at least one entry for this invoice.');
       return;
     }
-    onCreate(clientId, picked, billingProfileId);
+    if (!issued || !due) {
+      setError('Choose an issue date and due date.');
+      return;
+    }
+    if (due < issued) {
+      setError('The due date cannot be before the issue date.');
+      return;
+    }
+    onSubmit({
+      id: invoice?.id,
+      clientId,
+      entryIds: picked,
+      billingProfileId,
+      issued,
+      due,
+    });
   };
 
   return (
     <Dialog
       wide
-      title="New invoice"
-      subtitle="Select unbilled entries for one client"
+      title={invoice ? `Edit draft #${invoice.number}` : 'New invoice'}
+      subtitle={invoice ? 'Update its entries, dates, and payment account' : 'Select unbilled entries for one client'}
       onClose={onClose}
       footer={
         <>
@@ -381,9 +425,9 @@ export function InvoiceDialog({ clients, entries, settings, selectedIds = [], on
             size="sm"
             icon="Receipt"
             disabled={!picked.length}
-            onClick={create}
+            onClick={submit}
           >
-            Create draft · {formatMoney(total, client?.currency)}
+            {invoice ? 'Save changes' : `Create draft · ${formatMoney(total, client?.currency)}`}
           </Button>
         </>
       }
@@ -391,11 +435,17 @@ export function InvoiceDialog({ clients, entries, settings, selectedIds = [], on
       {eligible.length ? (
         <>
           <div className="form-grid form-grid--two">
-            <Field label="Client" error={error}>
+            <Field label="Client">
               <Select
                 value={clientId}
                 onChange={(event) => {
+                  const nextClient = getClient(clients, event.target.value);
                   setClientId(event.target.value);
+                  if (!invoice && issued) {
+                    const nextDue = new Date(`${issued}T12:00:00`);
+                    nextDue.setDate(nextDue.getDate() + (nextClient?.terms ?? 14));
+                    setDue(localDate(nextDue));
+                  }
                   setError('');
                 }}
                 options={clients
@@ -415,6 +465,29 @@ export function InvoiceDialog({ clients, entries, settings, selectedIds = [], on
               />
             </Field>
           </div>
+          <div className="form-grid form-grid--two">
+            <Field label="Issue date">
+              <Input
+                type="date"
+                value={issued}
+                onChange={(event) => {
+                  setIssued(event.target.value);
+                  if (error) setError('');
+                }}
+              />
+            </Field>
+            <Field label="Due date">
+              <Input
+                type="date"
+                value={due}
+                onChange={(event) => {
+                  setDue(event.target.value);
+                  if (error) setError('');
+                }}
+              />
+            </Field>
+          </div>
+          {error ? <p className="dialog-error" role="alert">{error}</p> : null}
           {billingProfile && client?.currency !== billingProfile.currency ? (
             <p className="dialog-notice">
               This invoice is in {client?.currency}, while the selected payment account is in {billingProfile.currency}.
@@ -449,6 +522,28 @@ export function InvoiceDialog({ clients, entries, settings, selectedIds = [], on
           <span>Add a new billable entry before creating another invoice.</span>
         </div>
       )}
+    </Dialog>
+  );
+}
+
+export function DeleteInvoiceDialog({ invoice, entryCount, onClose, onConfirm }) {
+  return (
+    <Dialog
+      title={`Delete invoice #${invoice.number}?`}
+      subtitle="Remove this invoice from your records"
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button variant="danger" size="sm" icon="Trash2" onClick={onConfirm}>Delete invoice</Button>
+        </>
+      }
+    >
+      <p>
+        {entryCount
+          ? `${entryCount} ${entryCount === 1 ? 'time entry' : 'time entries'} will return to Unbilled so you can invoice them again.`
+          : 'This invoice has no linked time entries.'}
+      </p>
     </Dialog>
   );
 }

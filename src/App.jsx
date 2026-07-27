@@ -1,7 +1,13 @@
 import React from 'react';
 import { createEmptyState } from './data.js';
 import ConnectionScreen from './ConnectionScreen.jsx';
-import { ClientDialog, EntryDialog, InvoiceDialog, ResetDialog } from './dialogs.jsx';
+import {
+  ClientDialog,
+  DeleteInvoiceDialog,
+  EntryDialog,
+  InvoiceDialog,
+  ResetDialog,
+} from './dialogs.jsx';
 import { useServerState } from './persistence.js';
 import {
   ClientsScreen,
@@ -314,21 +320,21 @@ export default function App() {
     flash(`Client saved · ${client.name}`);
   };
 
-  const createInvoice = (clientId, entryIds, billingProfileId) => {
+  const createInvoice = ({ clientId, entryIds, billingProfileId, issued, due }) => {
     const client = getClient(clients, clientId);
     const billingProfile = getBillingProfile(settings, billingProfileId);
     const pickedEntries = entries.filter((entry) => entryIds.includes(entry.id));
-    const issued = new Date();
-    const due = new Date(issued);
-    due.setDate(due.getDate() + (client?.terms ?? 14));
-    const number = Math.max(0, ...invoices.map((invoice) => Number(invoice.number) || 0)) + 1;
+    const number = Math.max(
+      Number(settings.nextInvoiceNumber) || 1,
+      Math.max(0, ...invoices.map((invoice) => Number(invoice.number) || 0)) + 1,
+    );
     const invoice = {
       id: uid('invoice'),
       number,
       clientId,
       entryIds,
-      issued: issued.toISOString().slice(0, 10),
-      due: due.toISOString().slice(0, 10),
+      issued,
+      due,
       periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start,
       periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start,
       status: 'draft',
@@ -339,16 +345,115 @@ export default function App() {
       taxRate: Number(billingProfile?.taxRate) || 0,
     };
     invoice.total = invoice.subtotal + ((invoice.subtotal * invoice.taxRate) / 100);
-    setInvoices((current) => [invoice, ...current]);
-    setEntries((current) => current.map((entry) => entryIds.includes(entry.id) ? { ...entry, invoiced: true } : entry));
+    setData((current) => ({
+      ...current,
+      invoices: [invoice, ...current.invoices],
+      entries: current.entries.map((entry) =>
+        entryIds.includes(entry.id) ? { ...entry, invoiced: true } : entry,
+      ),
+      settings: {
+        ...current.settings,
+        nextInvoiceNumber: number + 1,
+      },
+    }));
     setDialog(null);
     setView('invoices');
     flash(`Draft #${number} created · ${formatMoney(invoice.total, client?.currency)}`);
   };
 
+  const updateInvoice = ({ id, clientId, entryIds, billingProfileId, issued, due }) => {
+    const existing = invoices.find((invoice) => invoice.id === id);
+    if (!existing || existing.status !== 'draft') return;
+    const client = getClient(clients, clientId);
+    const billingProfile = getBillingProfile(settings, billingProfileId);
+    const pickedEntries = entries.filter((entry) => entryIds.includes(entry.id));
+    const subtotal = pickedEntries.reduce((sum, entry) => sum + entryAmount(entry, clients), 0);
+    const taxRate = Number(billingProfile?.taxRate) || 0;
+    const updatedInvoice = {
+      ...existing,
+      clientId,
+      entryIds,
+      issued,
+      due,
+      periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start,
+      periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start,
+      hours: pickedEntries.reduce((sum, entry) => sum + entrySeconds(entry), 0) / 3600,
+      subtotal,
+      billingProfileId: billingProfile?.id,
+      billingProfile: billingProfile ? cloneData(billingProfile) : null,
+      taxRate,
+      total: subtotal + ((subtotal * taxRate) / 100),
+    };
+    const nextEntryIds = new Set(entryIds);
+    setData((current) => {
+      const otherInvoicedEntryIds = new Set(
+        current.invoices
+          .filter((invoice) => invoice.id !== id)
+          .flatMap((invoice) => invoice.entryIds || []),
+      );
+      return {
+        ...current,
+        invoices: current.invoices.map((invoice) => invoice.id === id ? updatedInvoice : invoice),
+        entries: current.entries.map((entry) => ({
+          ...entry,
+          invoiced: nextEntryIds.has(entry.id) || otherInvoicedEntryIds.has(entry.id),
+        })),
+      };
+    });
+    setDialog(null);
+    flash(`Draft #${existing.number} updated · ${formatMoney(updatedInvoice.total, client?.currency)}`);
+  };
+
   const setInvoiceStatus = (invoiceId, status) => {
     setInvoices((current) => current.map((invoice) => invoice.id === invoiceId ? { ...invoice, status } : invoice));
-    flash(status === 'paid' ? 'Invoice marked as paid' : 'Invoice marked as sent');
+    const invoice = invoices.find((item) => item.id === invoiceId);
+    const label = {
+      draft: 'draft',
+      pending: 'sent',
+      overdue: 'overdue',
+      paid: 'paid',
+    }[status] || status;
+    flash(`Invoice #${invoice?.number || ''} marked as ${label}`);
+  };
+
+  const deleteInvoice = (invoice) => {
+    setData((current) => {
+      const remainingInvoices = current.invoices.filter((item) => item.id !== invoice.id);
+      const remainingInvoicedEntryIds = new Set(
+        remainingInvoices.flatMap((item) => item.entryIds || []),
+      );
+      return {
+        ...current,
+        invoices: remainingInvoices,
+        entries: current.entries.map((entry) => ({
+          ...entry,
+          invoiced: remainingInvoicedEntryIds.has(entry.id),
+        })),
+        settings: {
+          ...current.settings,
+          nextInvoiceNumber: Math.max(
+            Number(current.settings.nextInvoiceNumber) || 1,
+            Number(invoice.number) + 1,
+          ),
+        },
+      };
+    });
+    setDialog(null);
+    flash(
+      `Invoice #${invoice.number} deleted`,
+      'Undo',
+      () => {
+        setData((current) => ({
+          ...current,
+          invoices: [invoice, ...current.invoices],
+          entries: current.entries.map((entry) => ({
+            ...entry,
+            invoiced: invoice.entryIds?.includes(entry.id) || entry.invoiced,
+          })),
+        }));
+        setToast(null);
+      },
+    );
   };
 
   const resetData = () => {
@@ -449,6 +554,8 @@ export default function App() {
               settings={settings}
               onCreate={(selectedIds = []) => setDialog({ type: 'invoice', selectedIds })}
               onStatus={setInvoiceStatus}
+              onEdit={(invoice) => setDialog({ type: 'invoice', invoice })}
+              onDelete={(invoice) => setDialog({ type: 'delete-invoice', invoice })}
             />
           ) : null}
           {view === 'reports' ? <ReportsScreen clients={clients} entries={entries} /> : null}
@@ -496,9 +603,18 @@ export default function App() {
           clients={clients}
           entries={entries}
           settings={settings}
+          invoice={dialog.invoice}
           selectedIds={dialog.selectedIds}
           onClose={() => setDialog(null)}
-          onCreate={createInvoice}
+          onSubmit={dialog.invoice ? updateInvoice : createInvoice}
+        />
+      ) : null}
+      {dialog?.type === 'delete-invoice' ? (
+        <DeleteInvoiceDialog
+          invoice={dialog.invoice}
+          entryCount={dialog.invoice.entryIds?.length || 0}
+          onClose={() => setDialog(null)}
+          onConfirm={() => deleteInvoice(dialog.invoice)}
         />
       ) : null}
       {dialog?.type === 'reset' ? <ResetDialog onClose={() => setDialog(null)} onConfirm={resetData} /> : null}

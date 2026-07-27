@@ -507,6 +507,8 @@ export function InvoicesScreen({
   settings,
   onCreate,
   onStatus,
+  onEdit,
+  onDelete,
 }) {
   const [tab, setTab] = React.useState('all');
   const [selectedId, setSelectedId] = React.useState(invoices[0]?.id);
@@ -650,8 +652,9 @@ export function InvoicesScreen({
             entries={entries}
             clients={clients}
             settings={settings}
-            onMarkSent={() => onStatus(selected.id, 'pending')}
-            onMarkPaid={() => onStatus(selected.id, 'paid')}
+            onStatusChange={(status) => onStatus(selected.id, status)}
+            onEdit={() => onEdit(selected)}
+            onDelete={() => onDelete(selected)}
             onPrint={() => window.print()}
           />
         ) : (
