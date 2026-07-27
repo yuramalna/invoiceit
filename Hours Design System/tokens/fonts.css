@@ -1,0 +1,5 @@
+/* Hours typefaces. NOTE: no brand font binaries were supplied — these are the
+   nearest Google Fonts matches and are loaded from Google's CDN.
+   Archivo       → display (semibold, tight) + UI. One grotesque does both.
+   Martian Mono  → durations, money, tabular data. Engineered, slab-square. */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..700;1,75..125,400..700&family=Martian+Mono:wght@300..700&display=swap");

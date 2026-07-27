@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.DS_Store
+*.log
+*.sqlite
+*.sqlite-*
+.env
+.env.*
+!.env.example
+.data
+.impeccable

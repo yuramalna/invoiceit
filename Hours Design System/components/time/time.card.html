@@ -1,0 +1,28 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Time tracking" subtitle="Timer bar, entry rows, duration formats" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:20px 24px;background:var(--surface-page);height:300px;overflow:hidden}#root{height:100%}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.col{display:flex;flex-direction:column;gap:14px}.lb{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint);font-weight:500}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Button, IconButton, Input, Select, Checkbox, Radio, Switch, Field, Icon, Card, StatTile, Badge, Tag, ProgressBar, DataTable, EmptyState, Timer, Duration, TimeEntryRow, Tabs, SidebarNav, Dialog, Toast, ToastStack, Tooltip } = window.HoursDesignSystem_76f0a9;
+function Demo(){
+  return (<div className="col">
+    <Timer running seconds={8048} ticking={false} task="Landing page revisions" projects={['Northwind · Website']} dotColor="var(--client-1)" />
+    <Timer task="" projects={['Select project…','Peak Labs · App']} ticking={false} />
+    <div style={{border:'1px solid var(--line-rule)',borderRadius:8,background:'var(--surface-card)',overflow:'hidden'}}>
+      <TimeEntryRow running task="Landing page revisions" client="Northwind" project="Website" span="09:15 – now" seconds={8048} amount="$213.75" onEdit={()=>{}} />
+      <TimeEntryRow task="Sprint planning call" client="Peak Labs" project="App" dotColor="var(--client-3)" span="13:00 – 14:00" seconds={3600} amount="$120.00" onResume={()=>{}} onEdit={()=>{}} onDelete={()=>{}} />
+      <TimeEntryRow task="Reading brief" client="Alder & Vine" dotColor="var(--client-2)" span="15:30 – 16:00" seconds={1800} billable={false} onResume={()=>{}} />
+    </div>
+    <div className="row" style={{gap:24}}>
+      <Duration seconds={8048} size="lg" tone="live" /><Duration seconds={8048} size="md" /><Duration seconds={8048} format="decimal" size="md" /><Duration seconds={8048} format="decimal" size="sm" tone="muted" />
+    </div>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script></body></html>

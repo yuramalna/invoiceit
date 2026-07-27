@@ -1,0 +1,11 @@
+:root{
+  --dur-instant:80ms;/* @kind other */--dur-fast:130ms;/* @kind other */--dur-base:190ms;/* @kind other */--dur-slow:280ms;/* @kind other */
+  --ease-out:cubic-bezier(.2,.6,.2,1);/* @kind other */
+  --ease-in-out:cubic-bezier(.4,0,.2,1);/* @kind other */
+  --ease-exit:cubic-bezier(.4,0,1,1);/* @kind other */
+  /* No spring, no bounce, no overshoot anywhere in Hours. */
+  --transition-control:background-color var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out),box-shadow var(--dur-fast) var(--ease-out);/* @kind other */
+  --transition-surface:opacity var(--dur-base) var(--ease-out),transform var(--dur-base) var(--ease-out);/* @kind other */
+}
+@keyframes hours-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes hours-fade-up{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}

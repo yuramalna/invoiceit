@@ -1,0 +1,34 @@
+<!-- @dsCard group="Components" viewport="700x330" name="Feedback" subtitle="Dialog, toast, tooltip" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:20px 24px;background:var(--surface-page);height:330px;overflow:hidden}#root{height:100%}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.col{display:flex;flex-direction:column;gap:14px}.lb{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint);font-weight:500}.hrs-scrim{position:relative!important;inset:auto!important;padding:0!important;background:transparent!important;backdrop-filter:none!important;animation:none!important}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Button, IconButton, Input, Select, Checkbox, Radio, Switch, Field, Icon, Card, StatTile, Badge, Tag, ProgressBar, DataTable, EmptyState, Timer, Duration, TimeEntryRow, Tabs, SidebarNav, Dialog, Toast, ToastStack, Tooltip } = window.HoursDesignSystem_76f0a9;
+function Demo(){
+  return (<div style={{position:'relative',height:'100%',display:'flex',gap:20}}>
+    <div style={{flex:'0 0 330px'}}>
+      <Dialog title="Edit entry" subtitle="Wed 22 Jul · Northwind · Website" onClose={()=>{}}
+        footer={<><Button variant="ghost" size="sm">Cancel</Button><Button variant="primary" size="sm">Save entry</Button></>}>
+        <Field label="Task"><Input defaultValue="Landing page revisions" /></Field>
+        <div style={{display:'flex',gap:12}}>
+          <Field label="Hours"><Input numeric align="right" suffix="h" defaultValue="2.25" /></Field>
+          <Field label="Rate"><Input numeric align="right" prefix="$" defaultValue="95.00" /></Field>
+        </div>
+        <Checkbox checked label="Billable" />
+      </Dialog>
+    </div>
+    <div className="col" style={{flex:1,justifyContent:'center',alignItems:'flex-start'}}>
+      <Toast icon="Check" actionLabel="Undo" onAction={()=>{}}>Entry saved · 2.25h to Northwind</Toast>
+      <Toast icon="Send" tone="success">Invoice #0142 marked as sent</Toast>
+      <Tooltip label={<>Exact: <b>2:14:08</b></>}><Button variant="secondary" size="sm" icon="Clock">Hover for exact time</Button></Tooltip>
+    </div>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script></body></html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Hours · type directions</title>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Martian+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:var(--font-sans)}
+.wrap{position:absolute;width:620px}
+.frame{position:relative;width:100%;background:var(--surface-page);border:1px solid var(--line-rule);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-card)}
+.tag{position:absolute;top:-34px;left:0;z-index:2;display:flex;align-items:baseline;gap:10px}
+.tag b{font-family:var(--font-sans);font-size:15px;font-weight:600;color:var(--ink-900)}
+.tag span{font-family:var(--font-mono);font-size:11px;color:var(--text-muted)}
+.pad{padding:26px 28px}
+.eb{font-family:var(--f-ui);font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:500;color:var(--text-muted)}
+h2{font-family:var(--f-dis);font-weight:var(--w-dis);font-size:var(--s-dis);line-height:var(--lh-dis);letter-spacing:var(--ls-dis);color:var(--ink-900);margin:6px 0 0}
+.sub{font-family:var(--f-ui);font-size:13.5px;color:var(--text-muted);margin-top:8px;max-width:44ch;line-height:1.55}
+.tiles{display:flex;gap:0;border-top:1px solid var(--line-rule);border-bottom:1px solid var(--line-rule);margin-top:22px}
+.tile{flex:1;padding:16px 20px;border-left:1px solid var(--line-hairline)}
+.tile:first-child{border-left:0}
+.tile .n{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:26px;letter-spacing:var(--ls-num);color:var(--ink-900);margin-top:8px;display:block;line-height:1.1;font-weight:var(--w-num)}
+.rows{background:var(--surface-card)}
+.r{display:flex;align-items:center;gap:14px;height:54px;padding:0 28px;border-bottom:1px solid var(--line-hairline)}
+.dot{width:7px;height:7px;border-radius:99px;flex:0 0 auto}
+.rm{flex:1;min-width:0}
+.rt{font-family:var(--f-ui);font-size:14px;color:var(--ink-900)}
+.rmeta{font-family:var(--f-ui);font-size:12px;color:var(--text-muted);margin-top:2px}
+.rspan{font-family:var(--f-num);font-size:11.5px;color:var(--text-faint);font-variant-numeric:tabular-nums}
+.rh{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:15px;color:var(--ink-900);letter-spacing:var(--ls-num);font-weight:var(--w-num)}
+.clock{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;background:linear-gradient(to right,var(--terracotta-50),#fff 45%);border-bottom:1px solid var(--line-rule)}
+.ctask{font-family:var(--f-ui);font-size:14px;color:var(--ink-500)}
+.ctime{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:34px;line-height:1;letter-spacing:var(--ls-num);color:var(--terracotta-600);font-weight:var(--w-num)}
+.ctime i{font-style:normal;opacity:.4}
+.foot{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-top:1px solid var(--line-rule)}
+.btn{font-family:var(--f-ui);font-size:13.5px;font-weight:500;height:34px;padding:0 16px;border-radius:5px;background:var(--pine-700);color:var(--paper-50);border:0;display:inline-flex;align-items:center}
+.total{font-family:var(--f-dis);font-size:var(--s-tot);letter-spacing:var(--ls-dis);color:var(--ink-900);font-weight:var(--w-dis)}
+.total b{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:var(--w-num);letter-spacing:var(--ls-num)}
+.specimen{display:flex;flex-direction:column;gap:2px;padding:20px 28px;background:var(--surface-sunken);border-top:1px solid var(--line-rule)}
+.specimen div{font-family:var(--f-num);font-size:10.5px;color:var(--text-muted);letter-spacing:0}
+
+/* A — current */
+#a{--f-dis:"Instrument Serif",serif;--f-ui:"Instrument Sans",sans-serif;--f-num:"IBM Plex Mono",monospace;--s-dis:34px;--lh-dis:1.06;--ls-dis:-.02em;--w-dis:400;--ls-num:-.01em;--w-num:400;--s-tot:22px}
+/* B — grotesque ledger */
+#b{--f-dis:"Archivo",sans-serif;--f-ui:"Archivo",sans-serif;--f-num:"Martian Mono",monospace;--s-dis:27px;--lh-dis:1.15;--ls-dis:-.03em;--w-dis:600;--ls-num:-.06em;--w-num:400;--s-tot:19px}
+/* C — bookish */
+#c{--f-dis:"Newsreader",serif;--f-ui:"Newsreader",serif;--f-num:"JetBrains Mono",monospace;--s-dis:36px;--lh-dis:1.1;--ls-dis:-.015em;--w-dis:400;--ls-num:-.02em;--w-num:400;--s-tot:23px}
+#c .rt,#c .eb,#c .btn{font-family:"Newsreader",serif}
+#c .eb{letter-spacing:.12em;font-weight:500}
+/* D — sharp editorial */
+#d{--f-dis:"Bodoni Moda",serif;--f-ui:"Work Sans",sans-serif;--f-num:"IBM Plex Mono",monospace;--s-dis:32px;--lh-dis:1.1;--ls-dis:-.005em;--w-dis:400;--ls-num:-.01em;--w-num:400;--s-tot:21px}
+</style></head><body>
+
+<div class="wrap" id="a" style="left:80px;top:120px">
+  <div class="tag"><b>A · Current</b><span>Instrument Serif / Instrument Sans / IBM Plex Mono</span></div>
+  <div class="frame">
+  <div class="clock"><span class="ctask">Landing page revisions · Northwind</span><span class="ctime">02:14<i>:08</i></span></div>
+  <div class="pad"><span class="eb">July · unbilled</span><h2>Alder &amp; Vine</h2><p class="sub">Fourteen entries across three projects, ready to invoice.</p>
+    <div class="tiles"><div class="tile"><span class="eb">This week</span><span class="n">27.75</span></div><div class="tile"><span class="eb">Outstanding</span><span class="n">$4,180</span></div><div class="tile"><span class="eb">Clients</span><span class="n">6</span></div></div></div>
+  <div class="rows">
+    <div class="r"><span class="dot" style="background:var(--client-1)"></span><div class="rm"><div class="rt">Landing page revisions</div><div class="rmeta">Northwind · Website</div></div><span class="rspan">09:15 – 11:30</span><span class="rh">2.25</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-3)"></span><div class="rm"><div class="rt">Sprint planning call</div><div class="rmeta">Peak Labs · App</div></div><span class="rspan">13:00 – 14:00</span><span class="rh">1.00</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-2)"></span><div class="rm"><div class="rt">Packaging dielines</div><div class="rmeta">Alder &amp; Vine · Packaging</div></div><span class="rspan">13:30 – 17:45</span><span class="rh">4.25</span></div>
+  </div>
+  <div class="foot"><span class="total">Total due <b>$1,235.00</b></span><button class="btn">Invoice selection</button></div>
+  <div class="specimen"><div>display 34 / 1.06 / −.02em · humanist serif, near-vertical stress</div><div>numerals −.01em · IBM Plex Mono, generous width</div></div>
+</div>
+</div>
+
+<div class="wrap" id="b" style="left:780px;top:120px">
+  <div class="tag"><b>B · Grotesque ledger</b><span>Archivo 600 / Archivo / Martian Mono — no serif at all</span></div>
+  <div class="frame">
+  <div class="clock"><span class="ctask">Landing page revisions · Northwind</span><span class="ctime">02:14<i>:08</i></span></div>
+  <div class="pad"><span class="eb">July · unbilled</span><h2>Alder &amp; Vine</h2><p class="sub">Fourteen entries across three projects, ready to invoice.</p>
+    <div class="tiles"><div class="tile"><span class="eb">This week</span><span class="n">27.75</span></div><div class="tile"><span class="eb">Outstanding</span><span class="n">$4,180</span></div><div class="tile"><span class="eb">Clients</span><span class="n">6</span></div></div></div>
+  <div class="rows">
+    <div class="r"><span class="dot" style="background:var(--client-1)"></span><div class="rm"><div class="rt">Landing page revisions</div><div class="rmeta">Northwind · Website</div></div><span class="rspan">09:15 – 11:30</span><span class="rh">2.25</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-3)"></span><div class="rm"><div class="rt">Sprint planning call</div><div class="rmeta">Peak Labs · App</div></div><span class="rspan">13:00 – 14:00</span><span class="rh">1.00</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-2)"></span><div class="rm"><div class="rt">Packaging dielines</div><div class="rmeta">Alder &amp; Vine · Packaging</div></div><span class="rspan">13:30 – 17:45</span><span class="rh">4.25</span></div>
+  </div>
+  <div class="foot"><span class="total">Total due <b>$1,235.00</b></span><button class="btn">Invoice selection</button></div>
+  <div class="specimen"><div>display 27 / 1.15 / −.03em · tight semibold grotesque, no display serif</div><div>numerals −.06em · Martian Mono, engineered and slab-square</div></div>
+</div>
+</div>
+
+<div class="wrap" id="c" style="left:80px;top:900px">
+  <div class="tag"><b>C · Bookish</b><span>Newsreader throughout / JetBrains Mono — serif UI, most editorial</span></div>
+  <div class="frame">
+  <div class="clock"><span class="ctask">Landing page revisions · Northwind</span><span class="ctime">02:14<i>:08</i></span></div>
+  <div class="pad"><span class="eb">July · unbilled</span><h2>Alder &amp; Vine</h2><p class="sub">Fourteen entries across three projects, ready to invoice.</p>
+    <div class="tiles"><div class="tile"><span class="eb">This week</span><span class="n">27.75</span></div><div class="tile"><span class="eb">Outstanding</span><span class="n">$4,180</span></div><div class="tile"><span class="eb">Clients</span><span class="n">6</span></div></div></div>
+  <div class="rows">
+    <div class="r"><span class="dot" style="background:var(--client-1)"></span><div class="rm"><div class="rt">Landing page revisions</div><div class="rmeta">Northwind · Website</div></div><span class="rspan">09:15 – 11:30</span><span class="rh">2.25</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-3)"></span><div class="rm"><div class="rt">Sprint planning call</div><div class="rmeta">Peak Labs · App</div></div><span class="rspan">13:00 – 14:00</span><span class="rh">1.00</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-2)"></span><div class="rm"><div class="rt">Packaging dielines</div><div class="rmeta">Alder &amp; Vine · Packaging</div></div><span class="rspan">13:30 – 17:45</span><span class="rh">4.25</span></div>
+  </div>
+  <div class="foot"><span class="total">Total due <b>$1,235.00</b></span><button class="btn">Invoice selection</button></div>
+  <div class="specimen"><div>display 36 / 1.10 · one family does everything, incl. rows and buttons</div><div>numerals −.02em · JetBrains Mono, narrow and quiet</div></div>
+</div>
+</div>
+
+<div class="wrap" id="d" style="left:780px;top:900px">
+  <div class="tag"><b>D · Sharp editorial</b><span>Bodoni Moda / Work Sans / IBM Plex Mono — high contrast</span></div>
+  <div class="frame">
+  <div class="clock"><span class="ctask">Landing page revisions · Northwind</span><span class="ctime">02:14<i>:08</i></span></div>
+  <div class="pad"><span class="eb">July · unbilled</span><h2>Alder &amp; Vine</h2><p class="sub">Fourteen entries across three projects, ready to invoice.</p>
+    <div class="tiles"><div class="tile"><span class="eb">This week</span><span class="n">27.75</span></div><div class="tile"><span class="eb">Outstanding</span><span class="n">$4,180</span></div><div class="tile"><span class="eb">Clients</span><span class="n">6</span></div></div></div>
+  <div class="rows">
+    <div class="r"><span class="dot" style="background:var(--client-1)"></span><div class="rm"><div class="rt">Landing page revisions</div><div class="rmeta">Northwind · Website</div></div><span class="rspan">09:15 – 11:30</span><span class="rh">2.25</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-3)"></span><div class="rm"><div class="rt">Sprint planning call</div><div class="rmeta">Peak Labs · App</div></div><span class="rspan">13:00 – 14:00</span><span class="rh">1.00</span></div>
+    <div class="r"><span class="dot" style="background:var(--client-2)"></span><div class="rm"><div class="rt">Packaging dielines</div><div class="rmeta">Alder &amp; Vine · Packaging</div></div><span class="rspan">13:30 – 17:45</span><span class="rh">4.25</span></div>
+  </div>
+  <div class="foot"><span class="total">Total due <b>$1,235.00</b></span><button class="btn">Invoice selection</button></div>
+  <div class="specimen"><div>display 32 / 1.10 · didone, thin hairlines — dramatic at large sizes only</div><div>UI Work Sans, neutral and slightly warm</div></div>
+</div>
+</div>
+
+</body></html>

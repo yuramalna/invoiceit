@@ -1,0 +1,14 @@
+services:
+  hours:
+    build: .
+    container_name: hours
+    restart: unless-stopped
+    environment:
+      HOURS_API_TOKEN: ${HOURS_API_TOKEN:?Set HOURS_API_TOKEN in .env}
+    ports:
+      - "8080:4174"
+    volumes:
+      - hours-data:/data
+
+volumes:
+  hours-data:

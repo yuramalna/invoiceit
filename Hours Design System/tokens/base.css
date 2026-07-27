@@ -1,0 +1,12 @@
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--surface-page);color:var(--text-body);font-family:var(--font-sans);font-size:var(--body-size);line-height:var(--body-lh);letter-spacing:var(--body-ls);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,h4,p,figure,blockquote{margin:0}
+h1,h2,h3{font-family:var(--font-display);font-weight:var(--weight-display);color:var(--text-display)}
+a{color:var(--text-link);text-decoration:none;border-bottom:1px solid var(--pine-200);transition:var(--transition-control)}
+a:hover{color:var(--text-link-hover);border-bottom-color:var(--terracotta-200)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--line-focus);outline-offset:2px}
+::selection{background:var(--terracotta-200);color:var(--ink-900)}
+/* Every number in Hours is tabular. */
+.num,[data-num]{font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:var(--num-ls)}
+.label,[data-label]{font-family:var(--font-sans);font-size:var(--label-size);line-height:var(--label-lh);letter-spacing:var(--label-ls);text-transform:uppercase;font-weight:var(--weight-medium);color:var(--text-muted)}

@@ -1,0 +1,109 @@
+<!-- @dsCard group="Hours app" viewport="1440x900" name="Hours · web app" subtitle="Self-hosted time tracking — today, entries, clients, invoices, reports" -->
+<!-- @startingPoint section="Hours app" subtitle="Full app shell with timer, entries and invoicing" viewport="1440x900" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Hours · time tracking</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{height:100%;margin:0}#root{height:100vh}</style>
+</head><body><div id="root"></div>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="AppShell.jsx"></script>
+<script type="text/babel" src="TodayScreen.jsx"></script>
+<script type="text/babel" src="EntriesScreen.jsx"></script>
+<script type="text/babel" src="ClientsScreen.jsx"></script>
+<script type="text/babel" src="InvoiceDocument.jsx"></script>
+<script type="text/babel" src="InvoicesScreen.jsx"></script>
+<script type="text/babel" src="ReportsScreen.jsx"></script>
+<script type="text/babel">
+const { Button, IconButton, Select, Dialog, Field, Input, Checkbox, Toast, ToastStack, Switch, Card, EmptyState, Badge } = window.HoursDesignSystem_76f0a9;
+
+const TITLES = {
+  today:['Wednesday, 22 July','3.75h today · timer running'],
+  entries:['Entries','128 entries · 14 unbilled'],
+  reports:['Reports','Last 6 months'],
+  clients:['Clients','5 clients · 8 projects'],
+  invoices:['Invoices','24 issued · $4,065 outstanding'],
+  settings:['Settings','Local instance · sqlite'],
+};
+
+function SettingsScreen(){
+  return (<div style={{maxWidth:560,display:'flex',flexDirection:'column',gap:'var(--space-4)'}}>
+    <Card eyebrow="Tracking" title="Defaults">
+      <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)'}}>
+        <Switch checked label="Round entries to the nearest 15 minutes" />
+        <Switch label="Stop the running timer at midnight" />
+        <Switch checked label="Treat new entries as billable" />
+        <Field label="Default currency"><Select options={['EUR €','USD $','GBP £']} /></Field>
+      </div>
+    </Card>
+    <Card eyebrow="Instance" title="Self-hosting">
+      <div style={{display:'flex',flexDirection:'column',gap:'var(--space-4)'}}>
+        <Field label="Database" hint="Mounted at /data inside the container"><Input defaultValue="/data/hours.sqlite" /></Field>
+        <Field label="Desktop app token" hint="Used by the macOS tracker to push entries"><Input numeric defaultValue="hrs_9f2c·····4b71" /></Field>
+        <div><Button icon="RefreshCw" size="sm">Rotate token</Button></div>
+      </div>
+    </Card>
+  </div>);
+}
+
+function App(){
+  const [view,setView]=React.useState('today');
+  const [running,setRunning]=React.useState(true);
+  const [seconds,setSeconds]=React.useState(8048);
+  const [editing,setEditing]=React.useState(null);
+  const [toast,setToast]=React.useState(null);
+  const [invoice,setInvoice]=React.useState(null);
+  const [title,meta]=TITLES[view];
+
+  const flash=(m)=>{setToast(m);clearTimeout(window.__t);window.__t=setTimeout(()=>setToast(null),2600)};
+
+  const actions = view==='today'
+    ? <><Select size="sm" options={['This week','Today','Last 7 days']} /><Button size="sm" icon="Plus" onClick={()=>setEditing({task:'',client:'Northwind Studio'})}>Add entry</Button></>
+    : view==='invoices'
+      ? <><Button size="sm" icon="Download">Export all</Button><Button size="sm" variant="primary" icon="Receipt">New invoice</Button></>
+      : view==='clients'
+        ? <Button size="sm" variant="primary" icon="Plus">New client</Button>
+        : <Button size="sm" icon="Download">Export</Button>;
+
+  return (
+    <AppShell view={view} onView={setView} title={title} meta={meta} actions={actions}
+      overlay={<>
+        {editing ? (
+          <Dialog title={editing.task?'Edit entry':'Add entry'} subtitle="Wed 22 Jul · Northwind Studio · Website"
+            onClose={()=>setEditing(null)}
+            footer={<><Button variant="ghost" size="sm" onClick={()=>setEditing(null)}>Cancel</Button>
+              <Button variant="primary" size="sm" onClick={()=>{setEditing(null);flash('Entry saved · 2.25h to Northwind')}}>Save entry</Button></>}>
+            <Field label="Task"><Input autoFocus defaultValue={editing.task} placeholder="What did you work on?" /></Field>
+            <div style={{display:'flex',gap:'var(--space-3)'}}>
+              <div style={{flex:1}}><Field label="Client"><Select options={['Northwind Studio','Alder & Vine','Peak Labs']} dotColor="var(--client-1)" /></Field></div>
+              <div style={{flex:1}}><Field label="Project"><Select options={['Website','Retainer']} /></Field></div>
+            </div>
+            <div style={{display:'flex',gap:'var(--space-3)'}}>
+              <Field label="Start"><Input numeric defaultValue="09:15" /></Field>
+              <Field label="End"><Input numeric defaultValue="11:30" /></Field>
+              <Field label="Hours"><Input numeric align="right" suffix="h" defaultValue="2.25" /></Field>
+              <Field label="Rate"><Input numeric align="right" prefix="$" defaultValue="95.00" /></Field>
+            </div>
+            <Field label="Note" optional><Input multiline rows={2} placeholder="Anything the client should see on the invoice" /></Field>
+            <Checkbox checked label="Billable" note="Included on the next invoice for this client" />
+          </Dialog>
+        ) : null}
+        {toast ? <ToastStack><Toast icon="Check" actionLabel="Undo" onAction={()=>setToast(null)}>{toast}</Toast></ToastStack> : null}
+      </>}>
+      {view==='today' ? <TodayScreen running={running} seconds={seconds} task="Landing page revisions"
+        onStart={()=>{setRunning(true);flash('Timer started')}}
+        onStop={()=>{setRunning(false);flash('Entry saved · 2.24h to Northwind')}}
+        onEdit={(e)=>setEditing(e)} /> : null}
+      {view==='entries' ? <EntriesScreen onEdit={(e)=>setEditing(e)} /> : null}
+      {view==='reports' ? <ReportsScreen /> : null}
+      {view==='clients' ? <ClientsScreen onNew={()=>flash('Client drafts are not wired up in this kit')} /> : null}
+      {view==='invoices' ? <InvoicesScreen selected={invoice} onSelect={setInvoice} /> : null}
+      {view==='settings' ? <SettingsScreen /> : null}
+    </AppShell>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script></body></html>

@@ -1,0 +1,58 @@
+:root{
+  /* — Paper (warm neutral surfaces, lightest → darkest) — */
+  --paper-25:#FEFDFA;--paper-50:#FBF9F3;--paper-100:#F5F2E9;--paper-200:#EDE8DA;--paper-300:#E2DCCA;
+
+  /* — Ink (warm near-black text + line, lightest → darkest) — */
+  --ink-100:#D6D1C2;--ink-200:#B6B0A0;--ink-300:#938D7C;--ink-400:#6E685A;--ink-500:#4E493E;--ink-700:#2C2A22;--ink-900:#161510;
+
+  /* — Brand — */
+  --pine-50:#E9EFEC;--pine-200:#B4C7BF;--pine-500:#2E5B4F;--pine-600:#234A40;--pine-700:#1A3A32;
+
+  /* — Accent: the running clock — */
+  --terracotta-50:#FBEDE7;--terracotta-200:#EFC3B0;--terracotta-500:#C8542B;--terracotta-600:#A94523;
+
+  /* — Semantic hues — */
+  --moss-50:#EBF1EC;--moss-500:#3E6B4F;
+  --ochre-50:#FAF1DE;--ochre-500:#B08326;
+  --rust-50:#FAEBE8;--rust-500:#A63A2A;
+  --slate-50:#EAEEF4;--slate-500:#3A5B8C;
+
+  /* — Semantic aliases: surfaces — */
+  --surface-page:var(--paper-50);
+  --surface-card:var(--paper-25);
+  --surface-sunken:var(--paper-100);
+  --surface-raised:#FFFFFF;
+  --surface-inverse:var(--ink-900);
+  --surface-brand:var(--pine-700);
+  --surface-hover:var(--paper-100);
+  --surface-active:var(--paper-200);
+  --surface-selected:var(--pine-50);
+
+  /* — Semantic aliases: text — */
+  --text-display:var(--ink-900);
+  --text-body:var(--ink-700);
+  --text-muted:var(--ink-400);
+  --text-faint:var(--ink-300);
+  --text-inverse:var(--paper-50);
+  --text-brand:var(--pine-600);
+  --text-live:var(--terracotta-600);
+  --text-link:var(--pine-600);
+  --text-link-hover:var(--terracotta-600);
+
+  /* — Semantic aliases: line — */
+  --line-hairline:rgba(22,21,16,.10);
+  --line-rule:var(--paper-300);
+  --line-strong:var(--ink-200);
+  --line-focus:var(--pine-500);
+
+  /* — Semantic aliases: status — */
+  --status-live:var(--terracotta-500);--status-live-bg:var(--terracotta-50);
+  --status-paid:var(--moss-500);--status-paid-bg:var(--moss-50);
+  --status-pending:var(--ochre-500);--status-pending-bg:var(--ochre-50);
+  --status-overdue:var(--rust-500);--status-overdue-bg:var(--rust-50);
+  --status-draft:var(--ink-400);--status-draft-bg:var(--paper-200);
+  --status-info:var(--slate-500);--status-info-bg:var(--slate-50);
+
+  /* — Client identity swatches (assigned in order as clients are added) — */
+  --client-1:#2E5B4F;--client-2:#C8542B;--client-3:#3A5B8C;--client-4:#B08326;--client-5:#7A4A73;--client-6:#4E493E;
+}
