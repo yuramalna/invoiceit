@@ -385,6 +385,7 @@ export function InvoiceDialog({
   );
   const [issued, setIssued] = React.useState(initialIssued);
   const [due, setDue] = React.useState(initialDue);
+  const [showEntryDates, setShowEntryDates] = React.useState(invoice?.showEntryDates !== false);
   const [error, setError] = React.useState('');
   const [taskQuery, setTaskQuery] = React.useState('');
   const [taskPage, setTaskPage] = React.useState(1);
@@ -478,6 +479,7 @@ export function InvoiceDialog({
       billingProfileId,
       issued,
       due,
+      showEntryDates,
     });
   };
 
@@ -557,6 +559,12 @@ export function InvoiceDialog({
               />
             </Field>
           </div>
+          <Checkbox
+            checked={showEntryDates}
+            onChange={(event) => setShowEntryDates(event.target.checked)}
+            label="Show work dates on invoice"
+            note="Adds a Date column to tracked-time rows in the invoice and PDF"
+          />
           {error ? <p className="dialog-error" role="alert">{error}</p> : null}
           {billingProfile && client?.currency !== billingProfile.currency ? (
             <p className="dialog-notice">

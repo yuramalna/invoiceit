@@ -69,6 +69,7 @@ function hydrateState(state) {
     invoices: (state.invoices || []).map((invoice) => ({
       ...invoice,
       additionalItems: Array.isArray(invoice.additionalItems) ? invoice.additionalItems : [],
+      showEntryDates: invoice.showEntryDates !== false,
     })),
     settings: {
       ...clone(defaultSettings),

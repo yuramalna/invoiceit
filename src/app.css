@@ -689,15 +689,21 @@ textarea {
   white-space: nowrap;
 }
 
-.invoice-lines th:nth-child(2) {
-  width: 70px;
+.invoice-lines .invoice-line__date {
+  width: 108px;
+  padding-right: var(--space-2);
+  text-align: left;
 }
 
-.invoice-lines th:nth-child(3) {
-  width: 92px;
+.invoice-lines .invoice-line__quantity {
+  width: 72px;
 }
 
-.invoice-lines th:nth-child(4) {
+.invoice-lines .invoice-line__unit-price {
+  width: 88px;
+}
+
+.invoice-lines .invoice-line__amount {
   width: 88px;
 }
 
@@ -2186,6 +2192,7 @@ textarea {
   }
 
   .app-shell > .hrs-nav,
+  .skip-link,
   .topbar,
   .invoice-list,
   .invoice-toolbar,

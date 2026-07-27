@@ -72,6 +72,7 @@ export default function InvoiceDocument({
       id: entry.id,
       description: entry.task,
       detail: entry.description || project?.name,
+      date: formatDate(entry.start, { day: '2-digit', month: 'short', year: 'numeric' }),
       quantity: `${formatDecimalHours(entrySeconds(entry))} h`,
       unitPrice: project?.rate || 0,
       amount: entryAmount(entry, clients),
@@ -80,6 +81,7 @@ export default function InvoiceDocument({
   const additionalLines = additionalItems.map((item) => ({
     id: item.id,
     description: item.description,
+    date: '—',
     quantity: formatQuantity(item.quantity),
     unitPrice: Number(item.unitPrice) || 0,
     amount: invoiceItemAmount(item),
@@ -91,6 +93,7 @@ export default function InvoiceDocument({
         id: 'summary',
         description: 'Professional services',
         detail: 'Time log attached',
+        date: formatDate(invoice.periodStart || invoice.issued),
         quantity: `${Number(invoice.hours || 0).toFixed(2)} h`,
         unitPrice: invoice.hours ? invoice.subtotal / invoice.hours : 0,
         amount: invoice.subtotal || 0,
@@ -113,6 +116,7 @@ export default function InvoiceDocument({
   const periodSummary = invoiceEntries.length
     ? additionalItems.length ? 'Tracked time and additional items' : 'Tracked time by project'
     : 'Additional items';
+  const showLineDates = invoice.showEntryDates !== false && timeLines.length > 0;
 
   return (
     <section className="invoice-frame" aria-label={`Invoice ${invoice.number}`}>
@@ -219,9 +223,10 @@ export default function InvoiceDocument({
             <thead>
               <tr>
                 <th>Description</th>
-                <th>Quantity</th>
-                <th>Unit price</th>
-                <th>Amount</th>
+                {showLineDates ? <th className="invoice-line__date">Date</th> : null}
+                <th className="invoice-line__quantity">Quantity</th>
+                <th className="invoice-line__unit-price">Unit price</th>
+                <th className="invoice-line__amount">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -231,9 +236,10 @@ export default function InvoiceDocument({
                     <strong>{line.description}</strong>
                     {line.detail ? <small>{line.detail}</small> : null}
                   </td>
-                  <td>{line.quantity}</td>
-                  <td>{formatMoney(line.unitPrice, currency)}</td>
-                  <td>{formatMoney(line.amount, currency)}</td>
+                  {showLineDates ? <td className="invoice-line__date">{line.date}</td> : null}
+                  <td className="invoice-line__quantity">{line.quantity}</td>
+                  <td className="invoice-line__unit-price">{formatMoney(line.unitPrice, currency)}</td>
+                  <td className="invoice-line__amount">{formatMoney(line.amount, currency)}</td>
                 </tr>
               ))}
             </tbody>

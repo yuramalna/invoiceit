@@ -321,7 +321,15 @@ export default function App() {
     flash(`Client saved · ${client.name}`);
   };
 
-  const createInvoice = ({ clientId, entryIds, additionalItems, billingProfileId, issued, due }) => {
+  const createInvoice = ({
+    clientId,
+    entryIds,
+    additionalItems,
+    billingProfileId,
+    issued,
+    due,
+    showEntryDates,
+  }) => {
     const client = getClient(clients, clientId);
     const billingProfile = getBillingProfile(settings, billingProfileId);
     const pickedEntries = entries.filter((entry) => entryIds.includes(entry.id));
@@ -339,6 +347,7 @@ export default function App() {
       additionalItems,
       issued,
       due,
+      showEntryDates,
       periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start || issued,
       periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start || issued,
       status: 'draft',
@@ -365,7 +374,16 @@ export default function App() {
     flash(`Draft #${number} created · ${formatMoney(invoice.total, client?.currency)}`);
   };
 
-  const updateInvoice = ({ id, clientId, entryIds, additionalItems, billingProfileId, issued, due }) => {
+  const updateInvoice = ({
+    id,
+    clientId,
+    entryIds,
+    additionalItems,
+    billingProfileId,
+    issued,
+    due,
+    showEntryDates,
+  }) => {
     const existing = invoices.find((invoice) => invoice.id === id);
     if (!existing || existing.status !== 'draft') return;
     const client = getClient(clients, clientId);
@@ -381,6 +399,7 @@ export default function App() {
       additionalItems,
       issued,
       due,
+      showEntryDates,
       periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start || issued,
       periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start || issued,
       hours: pickedEntries.reduce((sum, entry) => sum + entrySeconds(entry), 0) / 3600,

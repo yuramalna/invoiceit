@@ -56,3 +56,5 @@ Billing settings avoid industry shorthand. Use “Payment due” instead of “N
 Invoice editing separates tracked time from additional items. Additional items use the familiar description, quantity, and unit-price pattern so equipment, expenses, licenses, and fixed fees can coexist with hourly work without changing the time ledger.
 
 Entry duplication is review-first: “Duplicate” opens a prefilled new-entry dialog, while “Edit” continues to modify the original. A copy keeps the work details but receives a new identity and never inherits invoice linkage.
+
+Work dates are a per-invoice presentation option and default to visible. They appear as a compact Date column for tracked-time rows in both preview and print; web-only navigation controls, including the skip link, are always excluded from printed invoices.
