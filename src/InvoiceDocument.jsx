@@ -8,6 +8,7 @@ import {
   getBillingProfile,
   getClient,
   getProject,
+  invoiceItemAmount,
 } from './utils.js';
 
 const {
@@ -43,6 +44,13 @@ function DetailLines({ lines }) {
   ));
 }
 
+function formatQuantity(value) {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+}
+
 export default function InvoiceDocument({
   invoice,
   entries,
@@ -57,29 +65,39 @@ export default function InvoiceDocument({
   const invoiceEntries = invoice.entryIds?.length
     ? entries.filter((entry) => invoice.entryIds.includes(entry.id))
     : [];
-  const lines = invoiceEntries.length
-    ? invoiceEntries.map((entry) => {
-        const project = getProject(clients, entry.clientId, entry.projectId);
-        return {
-          id: entry.id,
-          description: entry.task,
-          detail: entry.description || project?.name,
-          hours: formatDecimalHours(entrySeconds(entry)),
-          rate: project?.rate || 0,
-          amount: entryAmount(entry, clients),
-        };
-      })
-    : [
-        {
-          id: 'summary',
-          description: 'Professional services',
-          detail: 'Time log attached',
-          hours: Number(invoice.hours || 0).toFixed(2),
-          rate: invoice.hours ? invoice.subtotal / invoice.hours : 0,
-          amount: invoice.subtotal || 0,
-        },
-      ];
-  const subtotal = invoiceEntries.length
+  const additionalItems = invoice.additionalItems || [];
+  const timeLines = invoiceEntries.map((entry) => {
+    const project = getProject(clients, entry.clientId, entry.projectId);
+    return {
+      id: entry.id,
+      description: entry.task,
+      detail: entry.description || project?.name,
+      quantity: `${formatDecimalHours(entrySeconds(entry))} h`,
+      unitPrice: project?.rate || 0,
+      amount: entryAmount(entry, clients),
+    };
+  });
+  const additionalLines = additionalItems.map((item) => ({
+    id: item.id,
+    description: item.description,
+    quantity: formatQuantity(item.quantity),
+    unitPrice: Number(item.unitPrice) || 0,
+    amount: invoiceItemAmount(item),
+  }));
+  const lines = [...timeLines, ...additionalLines];
+  if (!lines.length && invoice.subtotal) {
+    lines.push(
+      {
+        id: 'summary',
+        description: 'Professional services',
+        detail: 'Time log attached',
+        quantity: `${Number(invoice.hours || 0).toFixed(2)} h`,
+        unitPrice: invoice.hours ? invoice.subtotal / invoice.hours : 0,
+        amount: invoice.subtotal || 0,
+      },
+    );
+  }
+  const subtotal = lines.length
     ? lines.reduce((sum, line) => sum + line.amount, 0)
     : invoice.subtotal || 0;
   const currency = client.currency || settings.currency;
@@ -92,6 +110,9 @@ export default function InvoiceDocument({
   const paymentPurpose = (billingProfile.paymentPurpose || '')
     .replaceAll('#{number}', String(invoice.number));
   const taxLabel = billingProfile.taxLabel || (taxRate ? `Tax ${taxRate}%` : 'Tax');
+  const periodSummary = invoiceEntries.length
+    ? additionalItems.length ? 'Tracked time and additional items' : 'Tracked time by project'
+    : 'Additional items';
 
   return (
     <section className="invoice-frame" aria-label={`Invoice ${invoice.number}`}>
@@ -161,12 +182,16 @@ export default function InvoiceDocument({
             </p>
           </div>
           <div>
-            <span className="label">Service period</span>
+            <span className="label">{invoiceEntries.length ? 'Service period' : 'Invoice date'}</span>
             <p>
-              {formatDate(invoice.periodStart || invoice.issued, { day: '2-digit', month: 'short' })} –{' '}
-              {formatDate(invoice.periodEnd || invoice.issued, { day: '2-digit', month: 'short', year: 'numeric' })}
+              {invoiceEntries.length ? (
+                <>
+                  {formatDate(invoice.periodStart || invoice.issued, { day: '2-digit', month: 'short' })} –{' '}
+                  {formatDate(invoice.periodEnd || invoice.issued, { day: '2-digit', month: 'short', year: 'numeric' })}
+                </>
+              ) : formatDate(invoice.issued)}
               <br />
-              Grouped by project
+              {periodSummary}
             </p>
           </div>
           <div>
@@ -194,8 +219,8 @@ export default function InvoiceDocument({
             <thead>
               <tr>
                 <th>Description</th>
-                <th>Hours</th>
-                <th>Rate</th>
+                <th>Quantity</th>
+                <th>Unit price</th>
                 <th>Amount</th>
               </tr>
             </thead>
@@ -206,8 +231,8 @@ export default function InvoiceDocument({
                     <strong>{line.description}</strong>
                     {line.detail ? <small>{line.detail}</small> : null}
                   </td>
-                  <td>{line.hours}</td>
-                  <td>{formatMoney(line.rate, currency)}</td>
+                  <td>{line.quantity}</td>
+                  <td>{formatMoney(line.unitPrice, currency)}</td>
                   <td>{formatMoney(line.amount, currency)}</td>
                 </tr>
               ))}

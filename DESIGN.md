@@ -52,3 +52,5 @@ The production application consumes the canonical bundle in `Hours Design System
 Use sentence case, short factual labels, and middle dots for metadata separation. Billing durations use decimal hours to two places; active tracking uses `HH:MM:SS`. Currency includes a symbol and two decimals. Empty states explain the next action without congratulating the user.
 
 Billing settings avoid industry shorthand. Use “Payment due” instead of “Net days,” and “Monthly hour limit” instead of “Budget.” Both controls explain when they matter; the hour limit remains optional because not every engagement is a retainer or capped contract.
+
+Invoice editing separates tracked time from additional items. Additional items use the familiar description, quantity, and unit-price pattern so equipment, expenses, licenses, and fixed fees can coexist with hourly work without changing the time ledger.

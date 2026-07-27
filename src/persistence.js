@@ -66,6 +66,10 @@ function hydrateState(state) {
 
   return {
     ...state,
+    invoices: (state.invoices || []).map((invoice) => ({
+      ...invoice,
+      additionalItems: Array.isArray(invoice.additionalItems) ? invoice.additionalItems : [],
+    })),
     settings: {
       ...clone(defaultSettings),
       ...incomingSettings,

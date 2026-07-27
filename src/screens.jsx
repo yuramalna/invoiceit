@@ -3,6 +3,7 @@ import InvoiceDocument from './InvoiceDocument.jsx';
 import Pagination, { pageCount, pageSlice } from './Pagination.jsx';
 import { CURRENCY_OPTIONS } from './data.js';
 import {
+  additionalItemsSubtotal,
   currencySymbol,
   csvCell,
   dateKey,
@@ -572,9 +573,10 @@ export function InvoicesScreen({
     const hours = invoiceEntries.length
       ? invoiceEntries.reduce((sum, entry) => sum + entrySeconds(entry), 0) / 3600
       : invoice.hours || 0;
-    const subtotal = invoiceEntries.length
+    const timeSubtotal = invoiceEntries.length
       ? invoiceEntries.reduce((sum, entry) => sum + entryAmount(entry, clients), 0)
-      : invoice.subtotal || 0;
+      : Math.max(0, Number(invoice.subtotal || 0) - additionalItemsSubtotal(invoice.additionalItems));
+    const subtotal = timeSubtotal + additionalItemsSubtotal(invoice.additionalItems);
     const billingProfile = invoice.billingProfile
       || getBillingProfile(settings, invoice.billingProfileId);
     const taxRate = Number(invoice.taxRate ?? billingProfile?.taxRate) || 0;

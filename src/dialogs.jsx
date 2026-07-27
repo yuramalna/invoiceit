@@ -2,6 +2,7 @@ import React from 'react';
 import { CURRENCY_OPTIONS } from './data.js';
 import Pagination, { pageCount, pageSlice } from './Pagination.jsx';
 import {
+  additionalItemsSubtotal,
   currencySymbol,
   entryAmount,
   entrySeconds,
@@ -373,6 +374,13 @@ export function InvoiceDialog({
   const [picked, setPicked] = React.useState(() =>
     (invoice?.entryIds || selectedIds).filter((id) => eligible.some((entry) => entry.id === id)),
   );
+  const [additionalItems, setAdditionalItems] = React.useState(() =>
+    (invoice?.additionalItems || []).map((item) => ({
+      ...item,
+      quantity: String(item.quantity ?? 1),
+      unitPrice: String(item.unitPrice ?? ''),
+    })),
+  );
   const [issued, setIssued] = React.useState(initialIssued);
   const [due, setDue] = React.useState(initialDue);
   const [error, setError] = React.useState('');
@@ -402,15 +410,49 @@ export function InvoiceDialog({
     setTaskPage((current) => Math.min(current, taskPages));
   }, [taskPages]);
 
-  const subtotal = clientEntries
+  const timeSubtotal = clientEntries
     .filter((entry) => picked.includes(entry.id))
     .reduce((sum, entry) => sum + entryAmount(entry, clients), 0);
+  const subtotal = timeSubtotal + additionalItemsSubtotal(additionalItems);
   const taxRate = Number(billingProfile?.taxRate) || 0;
   const total = subtotal + ((subtotal * taxRate) / 100);
 
+  const updateAdditionalItem = (itemId, key, value) => {
+    setAdditionalItems((current) => current.map((item) =>
+      item.id === itemId ? { ...item, [key]: value } : item));
+    if (error) setError('');
+  };
+
+  const addAdditionalItem = () => {
+    setAdditionalItems((current) => [
+      ...current,
+      {
+        id: uid('invoice-item'),
+        description: '',
+        quantity: '1',
+        unitPrice: '',
+      },
+    ]);
+    if (error) setError('');
+  };
+
   const submit = () => {
-    if (!picked.length) {
-      setError('Select at least one entry for this invoice.');
+    if (!picked.length && !additionalItems.length) {
+      setError('Select tracked time or add an additional item.');
+      return;
+    }
+    const invalidItem = additionalItems.find((item) => {
+      const quantity = Number(item.quantity);
+      const unitPrice = Number(item.unitPrice);
+      return !item.description.trim()
+        || !Number.isFinite(quantity)
+        || quantity <= 0
+        || item.unitPrice === ''
+        || !Number.isFinite(unitPrice)
+        || unitPrice < 0;
+    });
+    if (invalidItem) {
+      setError('Complete each additional item with a description, positive quantity, and unit price.');
       return;
     }
     if (!issued || !due) {
@@ -425,6 +467,12 @@ export function InvoiceDialog({
       id: invoice?.id,
       clientId,
       entryIds: picked,
+      additionalItems: additionalItems.map((item) => ({
+        id: item.id,
+        description: item.description.trim(),
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+      })),
       billingProfileId,
       issued,
       due,
@@ -435,7 +483,7 @@ export function InvoiceDialog({
     <Dialog
       wide
       title={invoice ? `Edit draft #${invoice.number}` : 'New invoice'}
-      subtitle={invoice ? 'Update its entries, dates, and payment account' : 'Select unbilled entries for one client'}
+      subtitle={invoice ? 'Update its time, additional items, dates, and payment account' : 'Add tracked time, additional items, or both'}
       onClose={onClose}
       footer={
         <>
@@ -444,15 +492,17 @@ export function InvoiceDialog({
             variant="primary"
             size="sm"
             icon="Receipt"
-            disabled={!picked.length}
+            disabled={!picked.length && !additionalItems.length}
             onClick={submit}
           >
-            {invoice ? 'Save changes' : `Create draft · ${formatMoney(total, client?.currency)}`}
+            {invoice
+              ? `Save changes · ${formatMoney(total, client?.currency)}`
+              : `Create draft · ${formatMoney(total, client?.currency)}`}
           </Button>
         </>
       }
     >
-      {eligible.length ? (
+      {clients.length ? (
         <>
           <div className="form-grid form-grid--two">
             <Field label="Client">
@@ -468,9 +518,7 @@ export function InvoiceDialog({
                   }
                   setError('');
                 }}
-                options={clients
-                  .filter((item) => eligible.some((entry) => entry.clientId === item.id))
-                  .map((item) => ({ value: item.id, label: item.name }))}
+                options={clients.map((item) => ({ value: item.id, label: item.name }))}
                 dotColor={client?.color}
               />
             </Field>
@@ -514,68 +562,144 @@ export function InvoiceDialog({
               Confirm that the account can receive this currency.
             </p>
           ) : null}
-          <div className="invoice-picker-toolbar">
-            <div className="invoice-picker-search">
-              <Input
-                icon="Search"
-                aria-label="Search invoice tasks"
-                placeholder="Search tasks or projects"
-                value={taskQuery}
-                onChange={(event) => setTaskQuery(event.target.value)}
-              />
-            </div>
-            <span className="invoice-picker-toolbar__count">
-              {picked.length} selected
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={!pagedEntries.length || pagedEntries.every((entry) => picked.includes(entry.id))}
-              onClick={() => setPicked((current) => [
-                ...new Set([...current, ...pagedEntries.map((entry) => entry.id)]),
-              ])}
-            >
-              Select page
-            </Button>
-          </div>
-          <div className="invoice-entry-picker">
-            {pagedEntries.map((entry) => {
-              const project = getProject(clients, entry.clientId, entry.projectId);
-              return (
-                <label className="invoice-entry-option" key={entry.id}>
-                  <Checkbox
-                    checked={picked.includes(entry.id)}
-                    onChange={(event) => setPicked((current) =>
-                      event.target.checked ? [...current, entry.id] : current.filter((id) => id !== entry.id),
-                    )}
-                  />
-                  <span className="invoice-entry-option__main">
-                    <strong>{entry.task}</strong>
-                    <small>{formatDate(entry.start)} · {project?.name}</small>
-                  </span>
-                  <span className="invoice-entry-option__hours">{formatDecimalHours(entrySeconds(entry))}h</span>
-                  <span className="invoice-entry-option__amount">{formatMoney(entryAmount(entry, clients), client?.currency)}</span>
-                </label>
-              );
-            })}
-            {!pagedEntries.length ? (
-              <div className="invoice-entry-picker__empty">
-                No tasks match this search.
+          <section className="invoice-editor-section">
+            <header className="invoice-editor-section__head">
+              <div>
+                <h3>Tracked time</h3>
+                <p>Select completed billable entries for this client.</p>
               </div>
-            ) : null}
-          </div>
-          <Pagination
-            page={taskPage}
-            pageSize={taskPageSize}
-            total={matchingEntries.length}
-            label="tasks"
-            onPageChange={setTaskPage}
-          />
+              <span className="invoice-picker-toolbar__count">{picked.length} selected</span>
+            </header>
+            {clientEntries.length ? (
+              <>
+                <div className="invoice-picker-toolbar">
+                  <div className="invoice-picker-search">
+                    <Input
+                      icon="Search"
+                      aria-label="Search invoice tasks"
+                      placeholder="Search tasks or projects"
+                      value={taskQuery}
+                      onChange={(event) => setTaskQuery(event.target.value)}
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={!pagedEntries.length || pagedEntries.every((entry) => picked.includes(entry.id))}
+                    onClick={() => setPicked((current) => [
+                      ...new Set([...current, ...pagedEntries.map((entry) => entry.id)]),
+                    ])}
+                  >
+                    Select page
+                  </Button>
+                </div>
+                <div className="invoice-entry-picker">
+                  {pagedEntries.map((entry) => {
+                    const project = getProject(clients, entry.clientId, entry.projectId);
+                    return (
+                      <label className="invoice-entry-option" key={entry.id}>
+                        <Checkbox
+                          checked={picked.includes(entry.id)}
+                          onChange={(event) => setPicked((current) =>
+                            event.target.checked ? [...current, entry.id] : current.filter((id) => id !== entry.id),
+                          )}
+                        />
+                        <span className="invoice-entry-option__main">
+                          <strong>{entry.task}</strong>
+                          <small>{formatDate(entry.start)} · {project?.name}</small>
+                        </span>
+                        <span className="invoice-entry-option__hours">{formatDecimalHours(entrySeconds(entry))}h</span>
+                        <span className="invoice-entry-option__amount">{formatMoney(entryAmount(entry, clients), client?.currency)}</span>
+                      </label>
+                    );
+                  })}
+                  {!pagedEntries.length ? (
+                    <div className="invoice-entry-picker__empty">
+                      No tasks match this search.
+                    </div>
+                  ) : null}
+                </div>
+                <Pagination
+                  page={taskPage}
+                  pageSize={taskPageSize}
+                  total={matchingEntries.length}
+                  label="tasks"
+                  onPageChange={setTaskPage}
+                />
+              </>
+            ) : (
+              <div className="invoice-editor-section__empty">
+                No unbilled time entries for this client.
+              </div>
+            )}
+          </section>
+
+          <section className="invoice-editor-section">
+            <header className="invoice-editor-section__head">
+              <div>
+                <h3>Additional items</h3>
+                <p>Add equipment, expenses, licenses, or fixed fees.</p>
+              </div>
+              <Button size="sm" icon="Plus" onClick={addAdditionalItem}>Add item</Button>
+            </header>
+            {additionalItems.length ? (
+              <div className="invoice-additional-items">
+                {additionalItems.map((item, index) => (
+                  <section className="invoice-additional-item" key={item.id}>
+                    <header>
+                      <strong>Item {index + 1}</strong>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        icon="Trash2"
+                        aria-label={`Remove additional item ${index + 1}`}
+                        onClick={() => setAdditionalItems((current) =>
+                          current.filter((candidate) => candidate.id !== item.id))}
+                      >
+                        Remove
+                      </Button>
+                    </header>
+                    <div className="invoice-additional-item__fields">
+                      <Field label="Description">
+                        <Input
+                          value={item.description}
+                          placeholder="e.g. Laptop reimbursement"
+                          onChange={(event) => updateAdditionalItem(item.id, 'description', event.target.value)}
+                        />
+                      </Field>
+                      <Field label="Quantity">
+                        <Input
+                          numeric
+                          align="right"
+                          value={item.quantity}
+                          onChange={(event) => updateAdditionalItem(item.id, 'quantity', event.target.value)}
+                        />
+                      </Field>
+                      <Field label="Unit price">
+                        <Input
+                          numeric
+                          prefix={currencySymbol(client?.currency)}
+                          align="right"
+                          value={item.unitPrice}
+                          placeholder="0.00"
+                          onChange={(event) => updateAdditionalItem(item.id, 'unitPrice', event.target.value)}
+                        />
+                      </Field>
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="invoice-editor-section__empty">
+                No additional items on this invoice.
+              </div>
+            )}
+          </section>
         </>
       ) : (
         <div className="dialog-empty">
-          <strong>Everything billable is already invoiced.</strong>
-          <span>Add a new billable entry before creating another invoice.</span>
+          <strong>Add a client before creating an invoice.</strong>
+          <span>Invoices need a client for billing details and currency.</span>
         </div>
       )}
     </Dialog>

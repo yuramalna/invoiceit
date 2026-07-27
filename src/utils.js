@@ -28,6 +28,17 @@ export function entryAmount(entry, clients) {
   return Number(formatDecimalHours(entrySeconds(entry))) * (project?.rate || 0);
 }
 
+export function invoiceItemAmount(item) {
+  const quantity = Math.max(0, Number(item?.quantity) || 0);
+  const unitPrice = Math.max(0, Number(item?.unitPrice) || 0);
+  return Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100;
+}
+
+export function additionalItemsSubtotal(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .reduce((sum, item) => sum + invoiceItemAmount(item), 0);
+}
+
 export function formatMoney(value, currency = 'USD') {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

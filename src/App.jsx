@@ -18,6 +18,7 @@ import {
   TodayScreen,
 } from './screens.jsx';
 import {
+  additionalItemsSubtotal,
   entryAmount,
   entrySeconds,
   formatDate,
@@ -320,10 +321,12 @@ export default function App() {
     flash(`Client saved · ${client.name}`);
   };
 
-  const createInvoice = ({ clientId, entryIds, billingProfileId, issued, due }) => {
+  const createInvoice = ({ clientId, entryIds, additionalItems, billingProfileId, issued, due }) => {
     const client = getClient(clients, clientId);
     const billingProfile = getBillingProfile(settings, billingProfileId);
     const pickedEntries = entries.filter((entry) => entryIds.includes(entry.id));
+    const timeSubtotal = pickedEntries.reduce((sum, entry) => sum + entryAmount(entry, clients), 0);
+    const subtotal = timeSubtotal + additionalItemsSubtotal(additionalItems);
     const number = Math.max(
       Number(settings.nextInvoiceNumber) || 1,
       Math.max(0, ...invoices.map((invoice) => Number(invoice.number) || 0)) + 1,
@@ -333,13 +336,14 @@ export default function App() {
       number,
       clientId,
       entryIds,
+      additionalItems,
       issued,
       due,
-      periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start,
-      periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start,
+      periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start || issued,
+      periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start || issued,
       status: 'draft',
       hours: pickedEntries.reduce((sum, entry) => sum + entrySeconds(entry), 0) / 3600,
-      subtotal: pickedEntries.reduce((sum, entry) => sum + entryAmount(entry, clients), 0),
+      subtotal,
       billingProfileId: billingProfile?.id,
       billingProfile: billingProfile ? cloneData(billingProfile) : null,
       taxRate: Number(billingProfile?.taxRate) || 0,
@@ -361,22 +365,24 @@ export default function App() {
     flash(`Draft #${number} created · ${formatMoney(invoice.total, client?.currency)}`);
   };
 
-  const updateInvoice = ({ id, clientId, entryIds, billingProfileId, issued, due }) => {
+  const updateInvoice = ({ id, clientId, entryIds, additionalItems, billingProfileId, issued, due }) => {
     const existing = invoices.find((invoice) => invoice.id === id);
     if (!existing || existing.status !== 'draft') return;
     const client = getClient(clients, clientId);
     const billingProfile = getBillingProfile(settings, billingProfileId);
     const pickedEntries = entries.filter((entry) => entryIds.includes(entry.id));
-    const subtotal = pickedEntries.reduce((sum, entry) => sum + entryAmount(entry, clients), 0);
+    const timeSubtotal = pickedEntries.reduce((sum, entry) => sum + entryAmount(entry, clients), 0);
+    const subtotal = timeSubtotal + additionalItemsSubtotal(additionalItems);
     const taxRate = Number(billingProfile?.taxRate) || 0;
     const updatedInvoice = {
       ...existing,
       clientId,
       entryIds,
+      additionalItems,
       issued,
       due,
-      periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start,
-      periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start,
+      periodStart: [...pickedEntries].sort((a, b) => new Date(a.start) - new Date(b.start))[0]?.start || issued,
+      periodEnd: [...pickedEntries].sort((a, b) => new Date(b.start) - new Date(a.start))[0]?.start || issued,
       hours: pickedEntries.reduce((sum, entry) => sum + entrySeconds(entry), 0) / 3600,
       subtotal,
       billingProfileId: billingProfile?.id,

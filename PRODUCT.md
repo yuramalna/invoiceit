@@ -14,7 +14,7 @@ Hours is for one independent professional managing several part-time client enga
 
 ## Product Purpose
 
-Hours turns a fragmented set of engagements into an orderly billing workflow. It tracks time against a client and project, applies the correct rate, shows what remains unbilled, and produces a clear invoice with the underlying time log. Success means the user can account for a working day quickly and close a billing period without rebuilding the story in a spreadsheet.
+Hours turns a fragmented set of engagements into an orderly billing workflow. It tracks time against a client and project, applies the correct rate, adds direct charges such as equipment or fixed fees when needed, shows what remains unbilled, and produces a clear invoice with its supporting items. Success means the user can account for a working day quickly and close a billing period without rebuilding the story in a spreadsheet.
 
 ## Positioning
 
