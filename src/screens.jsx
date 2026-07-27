@@ -1,5 +1,6 @@
 import React from 'react';
 import InvoiceDocument from './InvoiceDocument.jsx';
+import Pagination, { pageCount, pageSlice } from './Pagination.jsx';
 import { CURRENCY_OPTIONS } from './data.js';
 import {
   currencySymbol,
@@ -271,6 +272,8 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
   const [query, setQuery] = React.useState('');
   const [clientFilter, setClientFilter] = React.useState('all');
   const [selected, setSelected] = React.useState([]);
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(25);
 
   const filtered = entries
     .filter((entry) => {
@@ -282,8 +285,17 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
     })
     .sort((a, b) => new Date(b.start) - new Date(a.start));
 
+  const totalPages = pageCount(filtered.length, pageSize);
+  const pagedEntries = pageSlice(filtered, Math.min(page, totalPages), pageSize);
+  React.useEffect(() => {
+    setPage(1);
+  }, [tab, query, clientFilter, pageSize]);
+  React.useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
   const rows = [];
-  groupEntries(filtered).forEach((group) => {
+  groupEntries(pagedEntries).forEach((group) => {
     rows.push({ __group: group.day });
     group.items.forEach((entry) => rows.push(viewEntry(entry, clients)));
   });
@@ -403,15 +415,25 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
           </Button>
         </div>
       </div>
-      <div className="table-scroll entries-table">
-        <Card flush>
-          <DataTable
-            columns={columns}
-            rows={rows}
-            renderCell={renderCell}
-            empty="No entries match these filters"
-          />
-        </Card>
+      <div className="paginated-list">
+        <div className="table-scroll entries-table">
+          <Card flush>
+            <DataTable
+              columns={columns}
+              rows={rows}
+              renderCell={renderCell}
+              empty="No entries match these filters"
+            />
+          </Card>
+        </div>
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          total={filtered.length}
+          label="entries"
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
     </div>
   );
@@ -512,6 +534,8 @@ export function InvoicesScreen({
 }) {
   const [tab, setTab] = React.useState('all');
   const [selectedId, setSelectedId] = React.useState(invoices[0]?.id);
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
   React.useEffect(() => {
     if (!invoices.some((invoice) => invoice.id === selectedId)) setSelectedId(invoices[0]?.id);
   }, [invoices, selectedId]);
@@ -522,7 +546,17 @@ export function InvoicesScreen({
     if (tab === 'drafts') return invoice.status === 'draft';
     return true;
   });
-  const selected = invoices.find((invoice) => invoice.id === selectedId) || filtered[0] || invoices[0];
+  const totalPages = pageCount(filtered.length, pageSize);
+  const pagedInvoices = pageSlice(filtered, Math.min(page, totalPages), pageSize);
+  const selected = pagedInvoices.find((invoice) => invoice.id === selectedId)
+    || pagedInvoices[0]
+    || null;
+  React.useEffect(() => {
+    setPage(1);
+  }, [tab, pageSize]);
+  React.useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
   const columns = [
     { key: 'number', label: 'No.', width: 76 },
     { key: 'client', label: 'Client' },
@@ -532,7 +566,7 @@ export function InvoicesScreen({
     { key: 'total', label: 'Total', numeric: true, width: 112 },
     { key: 'status', label: 'Status', width: 120 },
   ];
-  const rows = filtered.map((invoice) => {
+  const rows = pagedInvoices.map((invoice) => {
     const client = getClient(clients, invoice.clientId);
     const invoiceEntries = entries.filter((entry) => invoice.entryIds?.includes(entry.id));
     const hours = invoiceEntries.length
@@ -574,7 +608,7 @@ export function InvoicesScreen({
   };
 
   return (
-    <div className="invoice-layout">
+    <div className={selected ? 'invoice-layout' : 'invoice-layout invoice-layout--empty'}>
       <div className="invoice-list">
         <Tabs
           value={tab}
@@ -592,9 +626,10 @@ export function InvoicesScreen({
             New invoice
           </Button>
         </div>
-        <div className="table-scroll">
-          <Card flush>
-            <table className="hrs-table hrs-table--hover invoice-table">
+        <div className="paginated-list">
+          <div className="table-scroll">
+            <Card flush>
+              <table className="hrs-table hrs-table--hover invoice-table">
               <thead>
                 <tr>
                   {columns.map((column) => (
@@ -641,12 +676,22 @@ export function InvoicesScreen({
                   </tr>
                 )}
               </tbody>
-            </table>
-          </Card>
+              </table>
+            </Card>
+          </div>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={filtered.length}
+            label="invoices"
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[10, 20, 50]}
+          />
         </div>
       </div>
-      <aside className="invoice-preview">
-        {selected ? (
+      {selected ? (
+        <aside className="invoice-preview">
           <InvoiceDocument
             invoice={selected}
             entries={entries}
@@ -657,10 +702,8 @@ export function InvoicesScreen({
             onDelete={() => onDelete(selected)}
             onPrint={() => window.print()}
           />
-        ) : (
-          <EmptyState icon="FileText" title="No invoice selected" description="Create an invoice from unbilled entries." />
-        )}
-      </aside>
+        </aside>
+      ) : null}
     </div>
   );
 }

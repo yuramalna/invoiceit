@@ -1,5 +1,6 @@
 import React from 'react';
 import { CURRENCY_OPTIONS } from './data.js';
+import Pagination, { pageCount, pageSlice } from './Pagination.jsx';
 import {
   currencySymbol,
   entryAmount,
@@ -375,12 +376,31 @@ export function InvoiceDialog({
   const [issued, setIssued] = React.useState(initialIssued);
   const [due, setDue] = React.useState(initialDue);
   const [error, setError] = React.useState('');
+  const [taskQuery, setTaskQuery] = React.useState('');
+  const [taskPage, setTaskPage] = React.useState(1);
+  const taskPageSize = 8;
   const client = getClient(clients, clientId);
   const billingProfile = getBillingProfile(settings, billingProfileId);
-  const clientEntries = eligible.filter((entry) => entry.clientId === clientId);
+  const clientEntries = eligible
+    .filter((entry) => entry.clientId === clientId)
+    .sort((a, b) => new Date(b.start) - new Date(a.start));
+  const matchingEntries = clientEntries.filter((entry) => {
+    const project = getProject(clients, entry.clientId, entry.projectId);
+    return `${entry.task} ${entry.description || ''} ${project?.name || ''}`
+      .toLowerCase()
+      .includes(taskQuery.trim().toLowerCase());
+  });
+  const taskPages = pageCount(matchingEntries.length, taskPageSize);
+  const pagedEntries = pageSlice(matchingEntries, Math.min(taskPage, taskPages), taskPageSize);
   React.useEffect(() => {
     setPicked((current) => current.filter((id) => clientEntries.some((entry) => entry.id === id)));
   }, [clientId]);
+  React.useEffect(() => {
+    setTaskPage(1);
+  }, [clientId, taskQuery]);
+  React.useEffect(() => {
+    setTaskPage((current) => Math.min(current, taskPages));
+  }, [taskPages]);
 
   const subtotal = clientEntries
     .filter((entry) => picked.includes(entry.id))
@@ -494,8 +514,32 @@ export function InvoiceDialog({
               Confirm that the account can receive this currency.
             </p>
           ) : null}
+          <div className="invoice-picker-toolbar">
+            <div className="invoice-picker-search">
+              <Input
+                icon="Search"
+                aria-label="Search invoice tasks"
+                placeholder="Search tasks or projects"
+                value={taskQuery}
+                onChange={(event) => setTaskQuery(event.target.value)}
+              />
+            </div>
+            <span className="invoice-picker-toolbar__count">
+              {picked.length} selected
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={!pagedEntries.length || pagedEntries.every((entry) => picked.includes(entry.id))}
+              onClick={() => setPicked((current) => [
+                ...new Set([...current, ...pagedEntries.map((entry) => entry.id)]),
+              ])}
+            >
+              Select page
+            </Button>
+          </div>
           <div className="invoice-entry-picker">
-            {clientEntries.map((entry) => {
+            {pagedEntries.map((entry) => {
               const project = getProject(clients, entry.clientId, entry.projectId);
               return (
                 <label className="invoice-entry-option" key={entry.id}>
@@ -514,7 +558,19 @@ export function InvoiceDialog({
                 </label>
               );
             })}
+            {!pagedEntries.length ? (
+              <div className="invoice-entry-picker__empty">
+                No tasks match this search.
+              </div>
+            ) : null}
           </div>
+          <Pagination
+            page={taskPage}
+            pageSize={taskPageSize}
+            total={matchingEntries.length}
+            label="tasks"
+            onPageChange={setTaskPage}
+          />
         </>
       ) : (
         <div className="dialog-empty">

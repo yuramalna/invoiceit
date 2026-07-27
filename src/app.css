@@ -311,6 +311,61 @@ textarea {
   margin-left: auto;
 }
 
+.paginated-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pagination {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.pagination__range,
+.pagination__page {
+  color: var(--ink-700);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--num-ls);
+}
+
+.pagination__settings,
+.pagination__size,
+.pagination__controls {
+  display: flex;
+  align-items: center;
+}
+
+.pagination__settings {
+  gap: var(--space-5);
+}
+
+.pagination__size,
+.pagination__controls {
+  gap: var(--space-2);
+}
+
+.pagination__size > span {
+  white-space: nowrap;
+}
+
+.pagination__size .hrs-select {
+  width: 68px;
+}
+
+.pagination__page {
+  min-width: 88px;
+  font-size: 10.5px;
+  text-align: center;
+}
+
 .table-scroll {
   min-width: 0;
   overflow-x: auto;
@@ -416,6 +471,10 @@ textarea {
   grid-template-columns: minmax(660px, 1.1fr) minmax(560px, .9fr);
   align-items: start;
   gap: var(--space-6);
+}
+
+.invoice-layout--empty {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .invoice-list {
@@ -1246,6 +1305,34 @@ textarea {
   border-radius: var(--radius-lg);
 }
 
+.invoice-picker-toolbar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.invoice-picker-search {
+  width: min(320px, 100%);
+  margin-right: auto;
+}
+
+.invoice-picker-toolbar__count {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--num-ls);
+  white-space: nowrap;
+}
+
+.invoice-entry-picker__empty {
+  padding: var(--space-8) var(--space-4);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
 .invoice-entry-option {
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr) 62px 90px;
@@ -1770,6 +1857,22 @@ textarea {
     flex: 0 0 auto;
   }
 
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .pagination__settings {
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .pagination__controls {
+    margin-left: auto;
+  }
+
   .invoice-list .filter-bar {
     justify-content: flex-start;
   }
@@ -1857,6 +1960,19 @@ textarea {
 
   .invoice-entry-option__hours {
     display: none;
+  }
+
+  .invoice-picker-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .invoice-picker-search {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .invoice-picker-toolbar__count {
+    margin-right: auto;
   }
 
   .hrs-scrim {
