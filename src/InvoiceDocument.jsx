@@ -230,14 +230,6 @@ export default function InvoiceDocument({
           </div>
         </div>
 
-        <footer>
-          <span>
-            {client.terms === 0
-              ? 'Thank you. Payment is due on receipt — a full time log is attached.'
-              : `Thank you. Payment within ${client.terms || 14} days, please — a full time log is attached.`}
-          </span>
-          {billingProfile.preparedBy ? <span>Prepared by {billingProfile.preparedBy}</span> : null}
-        </footer>
       </article>
     </section>
   );
