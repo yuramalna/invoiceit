@@ -396,20 +396,35 @@ textarea {
 }
 
 .invoice-link {
-  padding: 0;
   color: var(--ink-900);
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: var(--num-ls);
-  background: none;
-  border: 0;
   border-bottom: 1px solid var(--line-rule);
+}
+
+.invoice-table__row {
   cursor: pointer;
 }
 
-.invoice-link:hover {
+.invoice-table__row[aria-current="true"] td {
+  background: var(--surface-selected);
+}
+
+.invoice-table__row[aria-current="true"] .invoice-link {
   color: var(--pine-600);
   border-color: var(--pine-500);
+}
+
+.invoice-table__row:focus-visible {
+  outline: 2px solid var(--pine-500);
+  outline-offset: -2px;
+}
+
+.invoice-table__empty {
+  height: 88px;
+  color: var(--text-faint);
+  text-align: center;
 }
 
 .invoice-frame {
@@ -517,9 +532,10 @@ textarea {
 
 .invoice-lines table {
   width: 100%;
-  min-width: 430px;
+  min-width: 0;
   border-collapse: collapse;
   font-size: 12px;
+  table-layout: fixed;
 }
 
 .invoice-lines th {
@@ -535,7 +551,21 @@ textarea {
 
 .invoice-lines th:not(:first-child),
 .invoice-lines td:not(:first-child) {
+  padding-left: var(--space-3);
   text-align: right;
+  white-space: nowrap;
+}
+
+.invoice-lines th:nth-child(2) {
+  width: 54px;
+}
+
+.invoice-lines th:nth-child(3) {
+  width: 76px;
+}
+
+.invoice-lines th:nth-child(4) {
+  width: 88px;
 }
 
 .invoice-lines td {
@@ -552,6 +582,7 @@ textarea {
   color: var(--ink-700);
   font-family: var(--font-sans);
   letter-spacing: normal;
+  overflow-wrap: anywhere;
   text-align: left;
 }
 
@@ -563,6 +594,7 @@ textarea {
 .invoice-lines td strong {
   color: var(--ink-900);
   font-weight: var(--weight-medium);
+  line-height: 1.4;
 }
 
 .invoice-lines td small {

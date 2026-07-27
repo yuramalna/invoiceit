@@ -267,7 +267,7 @@ export function TodayScreen({
 }
 
 export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInvoice }) {
-  const [tab, setTab] = React.useState('unbilled');
+  const [tab, setTab] = React.useState('all');
   const [query, setQuery] = React.useState('');
   const [clientFilter, setClientFilter] = React.useState('all');
   const [selected, setSelected] = React.useState([]);
@@ -544,11 +544,7 @@ export function InvoicesScreen({
   });
   const renderCell = (column, row) => {
     if (column.key === 'number') {
-      return (
-        <button className="invoice-link" onClick={() => setSelectedId(row.id)}>
-          #{row.number}
-        </button>
-      );
+      return <span className="invoice-link">#{row.number}</span>;
     }
     if (column.key === 'client') {
       return (
@@ -593,7 +589,54 @@ export function InvoicesScreen({
         </div>
         <div className="table-scroll">
           <Card flush>
-            <DataTable columns={columns} rows={rows} renderCell={renderCell} empty="No invoices in this view" />
+            <table className="hrs-table hrs-table--hover invoice-table">
+              <thead>
+                <tr>
+                  {columns.map((column) => (
+                    <th
+                      key={column.key}
+                      style={{ width: column.width, textAlign: column.numeric ? 'right' : 'left' }}
+                    >
+                      {column.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length ? rows.map((row) => {
+                  const isSelected = row.id === selected?.id;
+                  const selectRow = () => setSelectedId(row.id);
+                  return (
+                    <tr
+                      key={row.id}
+                      className="invoice-table__row"
+                      tabIndex={0}
+                      aria-current={isSelected ? 'true' : undefined}
+                      aria-label={`Preview invoice #${row.number} for ${row.client?.name || 'client'}`}
+                      onClick={selectRow}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          selectRow();
+                        }
+                      }}
+                    >
+                      {columns.map((column) => (
+                        <td key={column.key} className={column.numeric ? 'hrs-table__num' : ''}>
+                          {renderCell(column, row)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan={columns.length} className="invoice-table__empty">
+                      No invoices in this view
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </Card>
         </div>
       </div>
