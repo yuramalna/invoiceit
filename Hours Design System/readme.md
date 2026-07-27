@@ -76,7 +76,7 @@ Semantic pairs (`--status-*` + `--status-*-bg`) cover invoice life: live, paid, 
 - **Rendering:** always through the `Icon` component, which reads the glyph data off the Lucide global. No SVG paths are hand-written anywhere in this system, and no icon files live in `assets/` (nothing to copy — the set is CDN-only).
 - **Weight & size:** stroke 1.75 at all sizes, matched optically to Archivo. 14px in dense rows and small buttons, 16px default, 18–20px in navigation, 28px at stroke 1.25 for the single muted glyph in an empty state.
 - **Colour:** `currentColor`, inheriting the text colour of the control. Icons are never brand-coloured except inside an accent button (white on terracotta).
-- **Vocabulary in use:** `Clock`, `Play`, `Square`, `List`, `ChartNoAxesColumn`, `Users`, `Briefcase`, `FileText`, `Receipt`, `Download`, `Send`, `Plus`, `Search`, `ChevronDown`, `Check`, `X`, `Pencil`, `Trash2`, `Settings`, `RefreshCw`, `CalendarDays`, `ArrowUpRight`, `ArrowDownRight`.
+- **Vocabulary in use:** `Clock`, `Play`, `Square`, `List`, `ChartNoAxesColumn`, `Users`, `Briefcase`, `FileText`, `Receipt`, `Download`, `Send`, `Plus`, `Search`, `ChevronDown`, `Check`, `X`, `Copy`, `Pencil`, `Trash2`, `Settings`, `RefreshCw`, `CalendarDays`, `ArrowUpRight`, `ArrowDownRight`.
 - **Emoji and unicode as icons:** never. The one non-Lucide glyph in the system is the middle dot `·` used as a metadata separator, and the en dash in time spans.
 
 ---

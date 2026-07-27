@@ -32,7 +32,7 @@ function combineDateTime(date, time) {
   return new Date(`${date}T${time}:00`).toISOString();
 }
 
-export function EntryDialog({ entry, clients, defaultBillable, onClose, onSave }) {
+export function EntryDialog({ entry, duplicate = false, clients, defaultBillable, onClose, onSave }) {
   const firstClient = getClient(clients, entry?.clientId) || clients[0];
   const [form, setForm] = React.useState(() => ({
     clientId: entry?.clientId || firstClient?.id || '',
@@ -64,7 +64,7 @@ export function EntryDialog({ entry, clients, defaultBillable, onClose, onSave }
     const end = new Date(new Date(start).getTime() + seconds * 1000).toISOString();
     onSave({
       ...entry,
-      id: entry?.id || uid('entry'),
+      id: duplicate ? uid('entry') : entry?.id || uid('entry'),
       clientId: client.id,
       projectId: project.id,
       task: form.task.trim(),
@@ -73,21 +73,23 @@ export function EntryDialog({ entry, clients, defaultBillable, onClose, onSave }
       end,
       seconds,
       billable: form.billable,
-      invoiced: entry?.invoiced || false,
+      invoiced: duplicate ? false : entry?.invoiced || false,
       running: false,
-    });
+    }, { duplicated: duplicate });
   };
 
   return (
     <Dialog
       wide
-      title={entry ? 'Edit entry' : 'Add entry'}
+      title={duplicate ? 'Duplicate entry' : entry ? 'Edit entry' : 'Add entry'}
       subtitle={`${formatDate(form.date)} · ${client?.name || 'Choose a client'}`}
       onClose={onClose}
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" size="sm" onClick={save}>Save entry</Button>
+          <Button variant="primary" size="sm" onClick={save}>
+            {duplicate ? 'Create copy' : 'Save entry'}
+          </Button>
         </>
       }
     >

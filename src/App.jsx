@@ -290,14 +290,14 @@ export default function App() {
     flash(`Timer resumed · ${entry.task}`);
   };
 
-  const saveEntry = (entry) => {
+  const saveEntry = (entry, { duplicated = false } = {}) => {
     const exists = entries.some((item) => item.id === entry.id);
     setEntries((current) => exists
       ? current.map((item) => item.id === entry.id ? entry : item)
       : [entry, ...current]);
     setDialog(null);
     const client = getClient(clients, entry.clientId);
-    flash(`Entry saved · ${formatDecimalHours(entry.seconds)}h to ${client?.name}`);
+    flash(`${duplicated ? 'Entry duplicated' : 'Entry saved'} · ${formatDecimalHours(entry.seconds)}h to ${client?.name}`);
   };
 
   const deleteEntry = (entry) => {
@@ -539,6 +539,7 @@ export default function App() {
               clients={clients}
               entries={entries}
               onAdd={() => setDialog({ type: 'entry', entry: null })}
+              onDuplicate={(entry) => setDialog({ type: 'entry', entry, duplicate: true })}
               onEdit={(entry) => setDialog({ type: 'entry', entry })}
               onDelete={deleteEntry}
               onInvoice={(selectedIds) => setDialog({ type: 'invoice', selectedIds })}
@@ -588,6 +589,7 @@ export default function App() {
       {dialog?.type === 'entry' ? (
         <EntryDialog
           entry={dialog.entry}
+          duplicate={dialog.duplicate}
           clients={clients}
           defaultBillable={settings.defaultBillable}
           onClose={() => setDialog(null)}

@@ -268,7 +268,7 @@ export function TodayScreen({
   );
 }
 
-export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInvoice }) {
+export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, onDelete, onInvoice }) {
   const [tab, setTab] = React.useState('all');
   const [query, setQuery] = React.useState('');
   const [clientFilter, setClientFilter] = React.useState('all');
@@ -298,7 +298,7 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
   const rows = [];
   groupEntries(pagedEntries).forEach((group) => {
     rows.push({ __group: group.day });
-    group.items.forEach((entry) => rows.push(viewEntry(entry, clients)));
+    group.items.forEach((entry) => rows.push({ ...viewEntry(entry, clients), __entry: entry }));
   });
 
   const columns = [
@@ -308,7 +308,7 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
     { key: 'span', label: 'Span', width: 130 },
     { key: 'seconds', label: 'Hours', numeric: true, width: 80 },
     { key: 'amount', label: 'Amount', numeric: true, width: 110 },
-    { key: 'actions', label: '', width: 84 },
+    { key: 'actions', label: '', width: 112 },
   ];
   const renderCell = (column, row) => {
     if (column.key === 'pick') {
@@ -344,10 +344,19 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
     }
     if (column.key === 'seconds') return <Duration seconds={row.seconds} format="decimal" size="sm" />;
     if (column.key === 'actions') {
+      const sourceEntry = row.__entry || row;
       return (
         <span className="row-actions">
-          <IconButton icon="Pencil" size="sm" label={`Edit ${row.task}`} onClick={() => onEdit(row)} />
-          <IconButton icon="Trash2" size="sm" tone="danger" label={`Delete ${row.task}`} onClick={() => onDelete(row)} />
+          {!row.running ? (
+            <IconButton
+              icon="Copy"
+              size="sm"
+              label={`Duplicate ${row.task}`}
+              onClick={() => onDuplicate(sourceEntry)}
+            />
+          ) : null}
+          <IconButton icon="Pencil" size="sm" label={`Edit ${row.task}`} onClick={() => onEdit(sourceEntry)} />
+          <IconButton icon="Trash2" size="sm" tone="danger" label={`Delete ${row.task}`} onClick={() => onDelete(sourceEntry)} />
         </span>
       );
     }
