@@ -312,7 +312,7 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
     if (column.key === 'task') {
       return (
         <span className="table-task">
-          <span>{row.task}</span>
+          <span className="table-task__title" title={row.task}>{row.task}</span>
           {row.running ? <Badge tone="live" dot pulse>Running</Badge> : null}
           {!row.billable ? <Badge tone="draft">Non-billable</Badge> : null}
         </span>
@@ -320,9 +320,12 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
     }
     if (column.key === 'client') {
       return (
-        <span className="client-cell">
+        <span className="client-cell" title={`${row.client} · ${row.project}`}>
           <span className="client-dot" style={{ background: row.dot }} />
-          <span>{row.client}<span> · {row.project}</span></span>
+          <span className="client-cell__copy">
+            <strong>{row.client}</strong>
+            <small>{row.project}</small>
+          </span>
         </span>
       );
     }
@@ -400,7 +403,7 @@ export function EntriesScreen({ clients, entries, onAdd, onEdit, onDelete, onInv
           </Button>
         </div>
       </div>
-      <div className="table-scroll">
+      <div className="table-scroll entries-table">
         <Card flush>
           <DataTable
             columns={columns}
