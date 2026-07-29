@@ -60,3 +60,5 @@ Entry duplication is review-first: “Duplicate” opens a prefilled new-entry d
 Work dates are a per-invoice presentation option and default to visible. They appear as a compact Date column for tracked-time rows in both preview and print; web-only navigation controls, including the skip link, are always excluded from printed invoices.
 
 Entry forms protect in-progress work: backdrop clicks do not dismiss add, edit, or duplicate dialogs, while the explicit close and Cancel actions remain available. The entries ledger keeps Client and Project as separate sortable fields, supports both filters, and summarizes only the currently visible page. Monetary page totals stay grouped by currency instead of combining unlike currencies.
+
+The report’s Work completed ledger follows the same read pattern as Entries: consistent Date, Task, Client, Project, Hours, and Amount columns; two-way sorting; pagination; and visible-page totals. It remains read-only and inherits the report-level period and client filters.

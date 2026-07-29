@@ -460,7 +460,7 @@ textarea {
   white-space: nowrap;
 }
 
-.entries-page-total {
+.page-total {
   display: flex;
   min-height: 42px;
   align-items: center;
@@ -474,20 +474,20 @@ textarea {
   border-radius: var(--radius-md);
 }
 
-.entries-page-total__label {
+.page-total__label {
   margin-right: auto;
   color: var(--ink-700);
   font-weight: var(--weight-medium);
 }
 
-.entries-page-total__metric {
+.page-total__metric {
   display: inline-flex;
   align-items: baseline;
   gap: var(--space-2);
   white-space: nowrap;
 }
 
-.entries-page-total__metric strong {
+.page-total__metric strong {
   color: var(--ink-900);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -1025,6 +1025,15 @@ textarea {
   font-size: 10.5px;
 }
 
+.report-task,
+.report-cell-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .report-task {
   color: var(--ink-900);
   font-weight: var(--weight-medium);
@@ -1032,6 +1041,10 @@ textarea {
 
 .report-detail-table > .hrs-card {
   min-width: 820px;
+}
+
+.report-detail-table .hrs-table {
+  table-layout: fixed;
 }
 
 .button-row {
@@ -1975,7 +1988,7 @@ textarea {
     flex: 0 0 auto;
   }
 
-  .entries-page-total {
+  .page-total {
     min-height: 0;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -1983,7 +1996,7 @@ textarea {
     padding: var(--space-3) var(--space-4);
   }
 
-  .entries-page-total__label {
+  .page-total__label {
     width: 100%;
     margin-right: 0;
   }

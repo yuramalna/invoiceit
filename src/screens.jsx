@@ -524,13 +524,13 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
           </Card>
         </div>
         {pagedEntries.length ? (
-          <div className="entries-page-total" aria-label="Totals for entries on this page">
-            <span className="entries-page-total__label">Page total</span>
-            <span className="entries-page-total__metric">
+          <div className="page-total" aria-label="Totals for entries on this page">
+            <span className="page-total__label">Page total</span>
+            <span className="page-total__metric">
               <span>Hours</span>
               <strong>{formatDecimalHours(pageSeconds)} h</strong>
             </span>
-            <span className="entries-page-total__metric">
+            <span className="page-total__metric">
               <span>Amount</span>
               <strong>{pageAmountLabel}</strong>
             </span>
@@ -1039,6 +1039,9 @@ export function ReportsScreen({ clients, entries }) {
   const [clientId, setClientId] = useStoredReportValue('hours:report-client', 'all');
   const [customFrom, setCustomFrom] = useStoredReportValue('hours:report-from', dateKey(monthStart));
   const [customTo, setCustomTo] = useStoredReportValue('hours:report-to', todayKey);
+  const [detailPage, setDetailPage] = React.useState(1);
+  const [detailPageSize, setDetailPageSize] = React.useState(25);
+  const [detailSort, setDetailSort] = React.useState({ key: 'date', direction: 'desc' });
   const activeClientId = clients.some((client) => client.id === clientId) ? clientId : 'all';
   const range = reportDateRange(period, customFrom, customTo);
   const completed = entries
@@ -1104,17 +1107,82 @@ export function ReportsScreen({ clients, entries }) {
       currency: client?.currency,
     };
   });
+  const sortedDetailRows = [...detailRows].sort((a, b) => {
+    if (detailSort.key === 'amount') {
+      if (a.amount == null && b.amount == null) return 0;
+      if (a.amount == null) return 1;
+      if (b.amount == null) return -1;
+    }
+    const aValue = detailSort.key === 'date' ? new Date(a.date).getTime() : a[detailSort.key];
+    const bValue = detailSort.key === 'date' ? new Date(b.date).getTime() : b[detailSort.key];
+    const comparison = typeof aValue === 'string'
+      ? aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' })
+      : Number(aValue || 0) - Number(bValue || 0);
+    if (comparison !== 0) return detailSort.direction === 'asc' ? comparison : -comparison;
+    return new Date(b.date) - new Date(a.date);
+  });
+  const detailTotalPages = pageCount(sortedDetailRows.length, detailPageSize);
+  const pagedDetailRows = pageSlice(
+    sortedDetailRows,
+    Math.min(detailPage, detailTotalPages),
+    detailPageSize,
+  );
+  React.useEffect(() => {
+    setDetailPage(1);
+  }, [
+    range.fromKey,
+    range.toKey,
+    activeClientId,
+    detailPageSize,
+    detailSort.key,
+    detailSort.direction,
+  ]);
+  React.useEffect(() => {
+    setDetailPage((current) => Math.min(current, detailTotalPages));
+  }, [detailTotalPages]);
+
+  const detailPageSeconds = pagedDetailRows.reduce((sum, row) => sum + row.seconds, 0);
+  const detailPageAmounts = pagedDetailRows.reduce((totals, row) => {
+    if (row.amount == null) return totals;
+    const currency = row.currency || 'USD';
+    totals.set(currency, (totals.get(currency) || 0) + row.amount);
+    return totals;
+  }, new Map());
+  const detailPageAmountLabel = [...detailPageAmounts.entries()]
+    .sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB))
+    .map(([currency, amount]) => formatMoney(amount, currency))
+    .join(' · ') || '—';
+  const handleDetailSort = (key) => {
+    setDetailSort((current) => {
+      if (current.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return {
+        key,
+        direction: ['date', 'seconds', 'amount'].includes(key) ? 'desc' : 'asc',
+      };
+    });
+  };
   const detailColumns = [
     { key: 'date', label: 'Date', width: 110 },
-    { key: 'task', label: 'Work' },
+    { key: 'task', label: 'Task' },
     { key: 'client', label: 'Client', width: 170 },
     { key: 'project', label: 'Project', width: 170 },
     { key: 'seconds', label: 'Hours', numeric: true, width: 82 },
-    { key: 'amount', label: 'Value', numeric: true, width: 110 },
+    { key: 'amount', label: 'Amount', numeric: true, width: 110 },
   ];
   const renderDetailCell = (column, row) => {
-    if (column.key === 'date') return formatDate(row.date, { day: '2-digit', month: 'short', year: 'numeric' });
-    if (column.key === 'task') return <strong className="report-task">{row.task}</strong>;
+    if (column.key === 'date') {
+      return (
+        <span className="entry-date">
+          {formatDate(row.date, { day: '2-digit', month: 'short', year: 'numeric' })}
+        </span>
+      );
+    }
+    if (column.key === 'task') return <strong className="report-task" title={row.task}>{row.task}</strong>;
+    if (column.key === 'client' || column.key === 'project') {
+      return <span className="report-cell-label" title={row[column.key]}>{row[column.key]}</span>;
+    }
     if (column.key === 'seconds') return formatDecimalHours(row.seconds);
     if (column.key === 'amount') return row.amount == null ? <span className="muted">—</span> : formatMoney(row.amount, row.currency);
     return row[column.key];
@@ -1229,16 +1297,42 @@ export function ReportsScreen({ clients, entries }) {
       </Card>
 
       {template === 'overview' ? (
-        <div className="table-scroll report-detail-table">
-          <Card flush eyebrow={`${detailRows.length} ${detailRows.length === 1 ? 'entry' : 'entries'}`} title="Work completed">
-            <DataTable
-              columns={detailColumns}
-              rows={detailRows}
-              renderCell={renderDetailCell}
-              compact
-              empty="No completed entries in this period"
-            />
-          </Card>
+        <div className="paginated-list">
+          <div className="table-scroll report-detail-table">
+            <Card flush eyebrow={`${detailRows.length} ${detailRows.length === 1 ? 'entry' : 'entries'}`} title="Work completed">
+              <DataTable
+                columns={detailColumns}
+                rows={pagedDetailRows}
+                sortKey={detailSort.key}
+                sortDirection={detailSort.direction}
+                onSort={handleDetailSort}
+                renderCell={renderDetailCell}
+                compact
+                empty="No completed entries in this period"
+              />
+            </Card>
+          </div>
+          {pagedDetailRows.length ? (
+            <div className="page-total" aria-label="Totals for report entries on this page">
+              <span className="page-total__label">Page total</span>
+              <span className="page-total__metric">
+                <span>Hours</span>
+                <strong>{formatDecimalHours(detailPageSeconds)} h</strong>
+              </span>
+              <span className="page-total__metric">
+                <span>Amount</span>
+                <strong>{detailPageAmountLabel}</strong>
+              </span>
+            </div>
+          ) : null}
+          <Pagination
+            page={detailPage}
+            pageSize={detailPageSize}
+            total={detailRows.length}
+            label="report entries"
+            onPageChange={setDetailPage}
+            onPageSizeChange={setDetailPageSize}
+          />
         </div>
       ) : (
         <Card eyebrow={rangeLabel} title={breakdownTitle}>
