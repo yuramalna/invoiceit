@@ -7,6 +7,8 @@ export interface DataTableColumn {
   label: string;
   /** Right-aligns and switches the cell to mono tabular figures. */
   numeric?: boolean;
+  /** Set false for selection and action columns that cannot be sorted. */
+  sortable?: boolean;
   width?: string | number;
 }
 export interface DataTableRow {
@@ -23,6 +25,8 @@ export interface DataTableProps {
   /** 36px rows instead of 44px. */
   compact?: boolean;
   sortKey?: string;
+  /** Direction for the active sort key. @default "asc" */
+  sortDirection?: 'asc' | 'desc';
   onSort?: (key: string) => void;
   /** Custom cell renderer; return a node for (column, row, index). */
   renderCell?: (col: DataTableColumn, row: DataTableRow, i: number) => React.ReactNode;

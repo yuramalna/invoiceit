@@ -9,6 +9,8 @@ export interface DialogProps {
   footer?: React.ReactNode;
   /** 680px instead of 480px. */
   wide?: boolean;
+  /** Set false for forms where an accidental backdrop click would discard work. @default true */
+  closeOnBackdrop?: boolean;
   onClose?: () => void;
   children?: React.ReactNode;
 }

@@ -58,6 +58,18 @@ function viewEntry(entry, clients) {
   };
 }
 
+function entrySortValue(entry, key, clients) {
+  const client = getClient(clients, entry.clientId);
+  const project = getProject(clients, entry.clientId, entry.projectId);
+  if (key === 'date') return new Date(entry.start).getTime();
+  if (key === 'task') return entry.task || '';
+  if (key === 'client') return client?.name || '';
+  if (key === 'project') return project?.name || '';
+  if (key === 'seconds') return entrySeconds(entry);
+  if (key === 'amount') return entryAmount(entry, clients);
+  return '';
+}
+
 function dayLabel(dateValue, now = new Date()) {
   if (isSameLocalDay(dateValue, now)) {
     return `Today · ${formatDate(dateValue, { weekday: 'short', day: '2-digit', month: 'short' })}`;
@@ -272,28 +284,82 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
   const [tab, setTab] = React.useState('all');
   const [query, setQuery] = React.useState('');
   const [clientFilter, setClientFilter] = React.useState('all');
+  const [projectFilter, setProjectFilter] = React.useState('all');
+  const [sort, setSort] = React.useState({ key: 'date', direction: 'desc' });
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(25);
+
+  const projectOptions = clients
+    .filter((client) => clientFilter === 'all' || client.id === clientFilter)
+    .flatMap((client) => client.projects.map((project) => ({
+      value: project.id,
+      label: clientFilter === 'all' ? `${project.name} · ${client.name}` : project.name,
+    })))
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
 
   const filtered = entries
     .filter((entry) => {
       if (tab === 'unbilled' && (!entry.billable || entry.invoiced)) return false;
       if (tab === 'invoiced' && !entry.invoiced) return false;
       if (clientFilter !== 'all' && entry.clientId !== clientFilter) return false;
+      if (projectFilter !== 'all' && entry.projectId !== projectFilter) return false;
       const client = getClient(clients, entry.clientId);
-      return `${entry.task} ${entry.description} ${client?.name}`.toLowerCase().includes(query.toLowerCase());
+      const project = getProject(clients, entry.clientId, entry.projectId);
+      return `${entry.task} ${entry.description} ${client?.name} ${project?.name}`.toLowerCase().includes(query.toLowerCase());
     })
-    .sort((a, b) => new Date(b.start) - new Date(a.start));
+    .sort((a, b) => {
+      const aValue = entrySortValue(a, sort.key, clients);
+      const bValue = entrySortValue(b, sort.key, clients);
+      const comparison = typeof aValue === 'string'
+        ? aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' })
+        : aValue - bValue;
+      if (comparison !== 0) return sort.direction === 'asc' ? comparison : -comparison;
+      return new Date(b.start) - new Date(a.start);
+    });
 
   const totalPages = pageCount(filtered.length, pageSize);
   const pagedEntries = pageSlice(filtered, Math.min(page, totalPages), pageSize);
   React.useEffect(() => {
     setPage(1);
-  }, [tab, query, clientFilter, pageSize]);
+  }, [tab, query, clientFilter, projectFilter, pageSize, sort.key, sort.direction]);
   React.useEffect(() => {
     setPage((current) => Math.min(current, totalPages));
   }, [totalPages]);
+
+  React.useEffect(() => {
+    if (
+      projectFilter !== 'all'
+      && !clients
+        .filter((client) => clientFilter === 'all' || client.id === clientFilter)
+        .some((client) => client.projects.some((project) => project.id === projectFilter))
+    ) {
+      setProjectFilter('all');
+    }
+  }, [clientFilter, clients, projectFilter]);
+
+  const pageSeconds = pagedEntries.reduce((sum, entry) => sum + entrySeconds(entry), 0);
+  const pageAmounts = pagedEntries.reduce((totals, entry) => {
+    const currency = getClient(clients, entry.clientId)?.currency || 'USD';
+    totals.set(currency, (totals.get(currency) || 0) + entryAmount(entry, clients));
+    return totals;
+  }, new Map());
+  const pageAmountLabel = [...pageAmounts.entries()]
+    .sort(([currencyA], [currencyB]) => currencyA.localeCompare(currencyB))
+    .map(([currency, amount]) => formatMoney(amount, currency))
+    .join(' · ');
+
+  const handleSort = (key) => {
+    setSort((current) => {
+      if (current.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return {
+        key,
+        direction: ['date', 'seconds', 'amount'].includes(key) ? 'desc' : 'asc',
+      };
+    });
+  };
 
   const rows = pagedEntries.map((entry) => ({
     ...viewEntry(entry, clients),
@@ -301,14 +367,15 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
   }));
 
   const columns = [
-    { key: 'pick', label: '', width: 46 },
-    { key: 'date', label: 'Date', width: 106 },
+    { key: 'pick', label: '', width: 46, sortable: false },
+    { key: 'date', label: 'Date', width: 104 },
     { key: 'task', label: 'Task' },
-    { key: 'client', label: 'Client', width: 180 },
-    { key: 'span', label: 'Span', width: 112 },
+    { key: 'client', label: 'Client', width: 136 },
+    { key: 'project', label: 'Project', width: 168 },
+    { key: 'span', label: 'Span', width: 104, sortable: false },
     { key: 'seconds', label: 'Hours', numeric: true, width: 72 },
-    { key: 'amount', label: 'Amount', numeric: true, width: 100 },
-    { key: 'actions', label: '', width: 104 },
+    { key: 'amount', label: 'Amount', numeric: true, width: 96 },
+    { key: 'actions', label: '', width: 96, sortable: false },
   ];
   const renderCell = (column, row) => {
     if (column.key === 'pick') {
@@ -340,12 +407,16 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
     }
     if (column.key === 'client') {
       return (
-        <span className="client-cell" title={`${row.client} · ${row.project}`}>
+        <span className="client-cell" title={row.client}>
           <span className="client-dot" style={{ background: row.dot }} />
-          <span className="client-cell__copy">
-            <strong>{row.client}</strong>
-            <small>{row.project}</small>
-          </span>
+          <strong>{row.client}</strong>
+        </span>
+      );
+    }
+    if (column.key === 'project') {
+      return (
+        <span className="project-cell" title={row.project}>
+          <span>{row.project}</span>
         </span>
       );
     }
@@ -418,6 +489,12 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
           onChange={(event) => setClientFilter(event.target.value)}
           options={[{ value: 'all', label: 'All clients' }, ...clients.map((client) => ({ value: client.id, label: client.name }))]}
         />
+        <Select
+          aria-label="Filter by project"
+          value={projectFilter}
+          onChange={(event) => setProjectFilter(event.target.value)}
+          options={[{ value: 'all', label: 'All projects' }, ...projectOptions]}
+        />
         <div className="filter-bar__actions">
           <Button size="sm" icon="Download" onClick={exportCsv}>Export CSV</Button>
           <Button size="sm" variant="secondary" icon="Plus" onClick={onAdd}>Add entry</Button>
@@ -438,11 +515,27 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
             <DataTable
               columns={columns}
               rows={rows}
+              sortKey={sort.key}
+              sortDirection={sort.direction}
+              onSort={handleSort}
               renderCell={renderCell}
               empty="No entries match these filters"
             />
           </Card>
         </div>
+        {pagedEntries.length ? (
+          <div className="entries-page-total" aria-label="Totals for entries on this page">
+            <span className="entries-page-total__label">Page total</span>
+            <span className="entries-page-total__metric">
+              <span>Hours</span>
+              <strong>{formatDecimalHours(pageSeconds)} h</strong>
+            </span>
+            <span className="entries-page-total__metric">
+              <span>Amount</span>
+              <strong>{pageAmountLabel}</strong>
+            </span>
+          </div>
+        ) : null}
         <Pagination
           page={page}
           pageSize={pageSize}

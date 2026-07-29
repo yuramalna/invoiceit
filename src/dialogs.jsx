@@ -81,6 +81,7 @@ export function EntryDialog({ entry, duplicate = false, clients, defaultBillable
   return (
     <Dialog
       wide
+      closeOnBackdrop={false}
       title={duplicate ? 'Duplicate entry' : entry ? 'Edit entry' : 'Add entry'}
       subtitle={`${formatDate(form.date)} · ${client?.name || 'Choose a client'}`}
       onClose={onClose}

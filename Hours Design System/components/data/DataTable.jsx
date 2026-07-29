@@ -10,26 +10,45 @@ injectStyle('datatable', `
 .hrs-table tbody tr{transition:background-color var(--dur-fast) var(--ease-out)}
 .hrs-table--hover tbody tr:hover{background:var(--surface-hover)}
 .hrs-table__num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:var(--num-ls);color:var(--ink-900)}
-.hrs-table__sort{display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:inherit}
+.hrs-table__sort{display:inline-flex;align-items:center;gap:4px;padding:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;background:none;border:0;cursor:pointer}
 .hrs-table__sort:hover{color:var(--ink-700)}
+.hrs-table__sort:focus-visible{outline:none;box-shadow:var(--ring-focus);border-radius:var(--radius-xs)}
 .hrs-table--compact td{height:36px}
 .hrs-table__group td{height:32px;background:var(--surface-sunken);border-bottom:1px solid var(--line-rule);font-size:var(--label-size);letter-spacing:var(--label-ls);text-transform:uppercase;font-weight:var(--weight-medium);color:var(--text-muted)}
 `);
 
-export function DataTable({ columns = [], rows = [], hover = true, compact, sortKey, onSort, renderCell, empty }) {
+export function DataTable({
+  columns = [],
+  rows = [],
+  hover = true,
+  compact,
+  sortKey,
+  sortDirection = 'asc',
+  onSort,
+  renderCell,
+  empty,
+}) {
   return (
     <table className={['hrs-table', hover ? 'hrs-table--hover' : '', compact ? 'hrs-table--compact' : ''].join(' ').trim()}>
       <thead>
         <tr>
-          {columns.map((c) => (
-            <th key={c.key} style={{ width: c.width, textAlign: c.numeric ? 'right' : 'left' }}>
-              {onSort ? (
-                <span className="hrs-table__sort" onClick={() => onSort(c.key)}>
-                  {c.label}{sortKey === c.key ? <Icon name="ChevronDown" size={12} /> : null}
-                </span>
-              ) : c.label}
-            </th>
-          ))}
+          {columns.map((c) => {
+            const sortable = Boolean(onSort && c.sortable !== false);
+            const active = sortable && sortKey === c.key;
+            return (
+              <th
+                key={c.key}
+                aria-sort={active ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
+                style={{ width: c.width, textAlign: c.numeric ? 'right' : 'left' }}
+              >
+                {sortable ? (
+                  <button type="button" className="hrs-table__sort" onClick={() => onSort(c.key)}>
+                    {c.label}{active ? <Icon name={sortDirection === 'asc' ? 'ChevronUp' : 'ChevronDown'} size={12} /> : null}
+                  </button>
+                ) : c.label}
+              </th>
+            );
+          })}
         </tr>
       </thead>
       <tbody>

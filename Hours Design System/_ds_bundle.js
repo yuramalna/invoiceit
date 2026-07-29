@@ -504,8 +504,9 @@ __ds_scope.injectStyle('datatable', `
 .hrs-table tbody tr{transition:background-color var(--dur-fast) var(--ease-out)}
 .hrs-table--hover tbody tr:hover{background:var(--surface-hover)}
 .hrs-table__num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:var(--num-ls);color:var(--ink-900)}
-.hrs-table__sort{display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:inherit}
+.hrs-table__sort{display:inline-flex;align-items:center;gap:4px;padding:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;background:none;border:0;cursor:pointer}
 .hrs-table__sort:hover{color:var(--ink-700)}
+.hrs-table__sort:focus-visible{outline:none;box-shadow:var(--ring-focus);border-radius:var(--radius-xs)}
 .hrs-table--compact td{height:36px}
 .hrs-table__group td{height:32px;background:var(--surface-sunken);border-bottom:1px solid var(--line-rule);font-size:var(--label-size);letter-spacing:var(--label-ls);text-transform:uppercase;font-weight:var(--weight-medium);color:var(--text-muted)}
 `);
@@ -515,6 +516,7 @@ function DataTable({
   hover = true,
   compact,
   sortKey,
+  sortDirection = 'asc',
   onSort,
   renderCell,
   empty
@@ -526,12 +528,14 @@ function DataTable({
     style: {
       width: c.width,
       textAlign: c.numeric ? 'right' : 'left'
-    }
-  }, onSort ? /*#__PURE__*/React.createElement("span", {
+    },
+    "aria-sort": onSort && c.sortable !== false && sortKey === c.key ? sortDirection === 'asc' ? 'ascending' : 'descending' : undefined
+  }, onSort && c.sortable !== false ? /*#__PURE__*/React.createElement("button", {
+    type: "button",
     className: "hrs-table__sort",
     onClick: () => onSort(c.key)
   }, c.label, sortKey === c.key ? /*#__PURE__*/React.createElement(__ds_scope.Icon, {
-    name: "ChevronDown",
+    name: sortDirection === 'asc' ? "ChevronUp" : "ChevronDown",
     size: 12
   }) : null) : c.label)))), /*#__PURE__*/React.createElement("tbody", null, rows.length === 0 ? /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
     colSpan: columns.length,
@@ -718,13 +722,14 @@ function Dialog({
   subtitle,
   footer,
   wide,
+  closeOnBackdrop = true,
   onClose,
   children
 }) {
   if (!open) return null;
   return /*#__PURE__*/React.createElement("div", {
     className: "hrs-scrim",
-    onClick: onClose
+    onClick: closeOnBackdrop ? onClose : undefined
   }, /*#__PURE__*/React.createElement("div", {
     className: ['hrs-dialog', wide ? 'hrs-dialog--wide' : ''].join(' ').trim(),
     role: "dialog",

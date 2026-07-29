@@ -13,10 +13,19 @@ injectStyle('dialog', `
 .hrs-dialog__foot{display:flex;justify-content:flex-end;gap:var(--space-2);padding:var(--space-4) var(--space-6);background:var(--surface-sunken);border-top:1px solid var(--line-rule)}
 `);
 
-export function Dialog({ open = true, title, subtitle, footer, wide, onClose, children }) {
+export function Dialog({
+  open = true,
+  title,
+  subtitle,
+  footer,
+  wide,
+  closeOnBackdrop = true,
+  onClose,
+  children,
+}) {
   if (!open) return null;
   return (
-    <div className="hrs-scrim" onClick={onClose}>
+    <div className="hrs-scrim" onClick={closeOnBackdrop ? onClose : undefined}>
       <div className={['hrs-dialog', wide ? 'hrs-dialog--wide' : ''].join(' ').trim()} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <header className="hrs-dialog__head">
           <div>
