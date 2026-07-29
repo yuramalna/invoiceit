@@ -70,6 +70,119 @@ function entrySortValue(entry, key, clients) {
   return '';
 }
 
+function calendarMonthDays(month) {
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  const mondayOffset = (first.getDay() + 6) % 7;
+  const start = new Date(first);
+  start.setDate(first.getDate() - mondayOffset);
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const cellCount = mondayOffset + daysInMonth > 35 ? 42 : 35;
+
+  return Array.from({ length: cellCount }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return date;
+  });
+}
+
+function EntryCalendar({ entries, tab, onSelectDate }) {
+  const [month, setMonth] = React.useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const today = new Date();
+  const days = calendarMonthDays(month);
+  const activity = entries.reduce((byDay, entry) => {
+    const key = dateKey(entry.start);
+    const current = byDay.get(key) || { count: 0, seconds: 0 };
+    current.count += 1;
+    current.seconds += entrySeconds(entry);
+    byDay.set(key, current);
+    return byDay;
+  }, new Map());
+  const monthKeys = days
+    .filter((date) => date.getMonth() === month.getMonth())
+    .map((date) => dateKey(date));
+  const monthActivity = monthKeys
+    .map((key) => activity.get(key))
+    .filter(Boolean);
+  const filledDays = monthActivity.length;
+  const entryCount = monthActivity.reduce((sum, item) => sum + item.count, 0);
+  const maxSeconds = Math.max(1, ...monthActivity.map((item) => item.seconds));
+  const tabLabel = tab === 'unbilled' ? 'Unbilled' : tab === 'invoiced' ? 'Invoiced' : 'All entries';
+  const isCurrentMonth = (
+    month.getFullYear() === today.getFullYear()
+    && month.getMonth() === today.getMonth()
+  );
+  const moveMonth = (offset) => {
+    setMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  };
+  const returnToCurrentMonth = () => {
+    setMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+  };
+
+  return (
+    <section className="entry-calendar" aria-label="Entry activity calendar">
+      <header className="entry-calendar__header">
+        <div>
+          <h2>{formatDate(month, { month: 'long', year: 'numeric' })}</h2>
+          <p>{tabLabel} · {filledDays} filled {filledDays === 1 ? 'day' : 'days'} · {entryCount} {entryCount === 1 ? 'entry' : 'entries'}</p>
+        </div>
+        <div className="entry-calendar__navigation">
+          {!isCurrentMonth ? (
+            <Button size="sm" variant="ghost" onClick={returnToCurrentMonth}>Today</Button>
+          ) : null}
+          <IconButton icon="ChevronLeft" size="sm" label="Previous month" onClick={() => moveMonth(-1)} />
+          <IconButton icon="ChevronRight" size="sm" label="Next month" onClick={() => moveMonth(1)} />
+        </div>
+      </header>
+      <div className="entry-calendar__weekdays" aria-hidden="true">
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => <span key={day}>{day}</span>)}
+      </div>
+      <div className="entry-calendar__grid">
+        {days.map((date) => {
+          const key = dateKey(date);
+          const dayActivity = activity.get(key);
+          const isOutsideMonth = date.getMonth() !== month.getMonth();
+          const isToday = isSameLocalDay(date, today);
+          const label = `${formatDate(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}. ${
+            dayActivity
+              ? `${dayActivity.count} ${dayActivity.count === 1 ? 'entry' : 'entries'}, ${formatDecimalHours(dayActivity.seconds)} hours`
+              : 'No entries'
+          }. Add an entry.`;
+          const className = [
+            'entry-calendar__day',
+            isOutsideMonth ? 'entry-calendar__day--outside' : '',
+            isToday ? 'entry-calendar__day--today' : '',
+            dayActivity ? 'entry-calendar__day--filled' : '',
+          ].filter(Boolean).join(' ');
+
+          return (
+            <button
+              type="button"
+              className={className}
+              key={key}
+              aria-label={label}
+              title={dayActivity ? `${formatDecimalHours(dayActivity.seconds)} h · ${dayActivity.count} ${dayActivity.count === 1 ? 'entry' : 'entries'}` : 'Add entry'}
+              onClick={() => onSelectDate(key)}
+            >
+              <span>{date.getDate()}</span>
+              {dayActivity ? (
+                <span
+                  className="entry-calendar__activity"
+                  style={{ '--activity-width': `${Math.max(28, (dayActivity.seconds / maxSeconds) * 100)}%` }}
+                  aria-hidden="true"
+                />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      <p className="entry-calendar__hint">Marked days contain entries in the current view. Select a date to add work.</p>
+    </section>
+  );
+}
+
 function dayLabel(dateValue, now = new Date()) {
   if (isSameLocalDay(dateValue, now)) {
     return `Today · ${formatDate(dateValue, { weekday: 'short', day: '2-digit', month: 'short' })}`;
@@ -464,50 +577,56 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
 
   return (
     <div className="screen-stack">
-      <Tabs
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { value: 'all', label: 'All', count: entries.length },
-          { value: 'unbilled', label: 'Unbilled', count: entries.filter((entry) => entry.billable && !entry.invoiced).length },
-          { value: 'invoiced', label: 'Invoiced', count: entries.filter((entry) => entry.invoiced).length },
-        ]}
-      />
-      <div className="filter-bar">
-        <div className="search-field">
-          <Input
-            icon="Search"
-            aria-label="Search tasks and notes"
-            placeholder="Search tasks and notes"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+      <div className="entries-overview">
+        <div className="entries-overview__filters">
+          <Tabs
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              { value: 'all', label: 'All', count: entries.length },
+              { value: 'unbilled', label: 'Unbilled', count: entries.filter((entry) => entry.billable && !entry.invoiced).length },
+              { value: 'invoiced', label: 'Invoiced', count: entries.filter((entry) => entry.invoiced).length },
+            ]}
           />
+          <p>Review the ledger below or choose a calendar date to add work.</p>
+          <div className="filter-bar">
+            <div className="search-field">
+              <Input
+                icon="Search"
+                aria-label="Search tasks and notes"
+                placeholder="Search tasks and notes"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+            <Select
+              aria-label="Filter by client"
+              value={clientFilter}
+              onChange={(event) => setClientFilter(event.target.value)}
+              options={[{ value: 'all', label: 'All clients' }, ...clients.map((client) => ({ value: client.id, label: client.name }))]}
+            />
+            <Select
+              aria-label="Filter by project"
+              value={projectFilter}
+              onChange={(event) => setProjectFilter(event.target.value)}
+              options={[{ value: 'all', label: 'All projects' }, ...projectOptions]}
+            />
+            <div className="filter-bar__actions">
+              <Button size="sm" icon="Download" onClick={exportCsv}>Export CSV</Button>
+              <Button size="sm" variant="secondary" icon="Plus" onClick={() => onAdd()}>Add entry</Button>
+              <Button
+                size="sm"
+                variant="primary"
+                icon="Receipt"
+                disabled={!selected.length}
+                onClick={() => onInvoice(selected)}
+              >
+                Invoice {selected.length ? selected.length : 'selection'}
+              </Button>
+            </div>
+          </div>
         </div>
-        <Select
-          aria-label="Filter by client"
-          value={clientFilter}
-          onChange={(event) => setClientFilter(event.target.value)}
-          options={[{ value: 'all', label: 'All clients' }, ...clients.map((client) => ({ value: client.id, label: client.name }))]}
-        />
-        <Select
-          aria-label="Filter by project"
-          value={projectFilter}
-          onChange={(event) => setProjectFilter(event.target.value)}
-          options={[{ value: 'all', label: 'All projects' }, ...projectOptions]}
-        />
-        <div className="filter-bar__actions">
-          <Button size="sm" icon="Download" onClick={exportCsv}>Export CSV</Button>
-          <Button size="sm" variant="secondary" icon="Plus" onClick={onAdd}>Add entry</Button>
-          <Button
-            size="sm"
-            variant="primary"
-            icon="Receipt"
-            disabled={!selected.length}
-            onClick={() => onInvoice(selected)}
-          >
-            Invoice {selected.length ? selected.length : 'selection'}
-          </Button>
-        </div>
+        <EntryCalendar entries={filtered} tab={tab} onSelectDate={onAdd} />
       </div>
       <div className="paginated-list">
         <div className="table-scroll entries-table">

@@ -18,6 +18,7 @@ import {
 const { Button, Checkbox, Dialog, Field, Input, Select } = window.HoursDesignSystem_76f0a9;
 
 function localDate(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const date = value ? new Date(value) : new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -32,14 +33,14 @@ function combineDateTime(date, time) {
   return new Date(`${date}T${time}:00`).toISOString();
 }
 
-export function EntryDialog({ entry, duplicate = false, clients, defaultBillable, onClose, onSave }) {
+export function EntryDialog({ entry, duplicate = false, initialDate, clients, defaultBillable, onClose, onSave }) {
   const firstClient = getClient(clients, entry?.clientId) || clients[0];
   const [form, setForm] = React.useState(() => ({
     clientId: entry?.clientId || firstClient?.id || '',
     projectId: entry?.projectId || firstClient?.projects[0]?.id || '',
     task: entry?.task || '',
     description: entry?.description || '',
-    date: localDate(entry?.start),
+    date: localDate(entry?.start || initialDate),
     start: localTime(entry?.start, '09:00'),
     end: localTime(entry?.end, '10:00'),
     hours: formatDecimalHours(entry ? entrySeconds(entry) : 3600),

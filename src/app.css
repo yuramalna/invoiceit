@@ -300,6 +300,191 @@ textarea {
   gap: var(--space-3);
 }
 
+.entries-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 308px;
+  align-items: start;
+  gap: var(--space-8);
+}
+
+.entries-overview__filters {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.entries-overview__filters > p {
+  max-width: 44ch;
+  margin-top: calc(var(--space-2) * -1);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.entries-overview__filters .filter-bar {
+  align-items: stretch;
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.entries-overview__filters .search-field {
+  flex: 1 1 220px;
+}
+
+.entries-overview__filters .filter-bar > .hrs-select {
+  flex: 1 1 148px;
+}
+
+.entries-overview__filters .filter-bar__actions {
+  width: 100%;
+  margin-left: 0;
+}
+
+.entry-calendar {
+  --entry-calendar-accent: var(--pine-500);
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--line-rule);
+  border-radius: var(--radius-lg);
+}
+
+.entry-calendar__header {
+  display: flex;
+  min-height: 38px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.entry-calendar__header h2 {
+  color: var(--ink-900);
+  font-size: 14px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: -.014em;
+}
+
+.entry-calendar__header p,
+.entry-calendar__hint {
+  color: var(--text-muted);
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
+.entry-calendar__header p {
+  margin-top: 2px;
+}
+
+.entry-calendar__navigation {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.entry-calendar__navigation .hrs-btn {
+  min-height: 28px;
+  padding-right: var(--space-2);
+  padding-left: var(--space-2);
+}
+
+.entry-calendar__weekdays,
+.entry-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.entry-calendar__weekdays {
+  margin-top: var(--space-3);
+  padding-bottom: var(--space-1);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: var(--num-ls);
+  text-align: center;
+}
+
+.entry-calendar__grid {
+  gap: 2px;
+}
+
+.entry-calendar__day {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  color: var(--ink-700);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--num-ls);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.entry-calendar__day:hover {
+  color: var(--ink-900);
+  background: var(--surface-hover);
+}
+
+.entry-calendar__day:focus-visible {
+  z-index: 1;
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.entry-calendar__day--outside {
+  color: var(--text-faint);
+}
+
+.entry-calendar__day--filled {
+  color: var(--ink-900);
+  background: var(--surface-selected);
+  font-weight: var(--weight-medium);
+}
+
+.entry-calendar__day--today::after {
+  position: absolute;
+  inset: 4px;
+  content: "";
+  border: 1px solid var(--ink-500);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+.entry-calendar__activity {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  left: 4px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+}
+
+.entry-calendar__activity::after {
+  display: block;
+  width: var(--activity-width);
+  height: 100%;
+  content: "";
+  background: var(--entry-calendar-accent);
+  border-radius: inherit;
+}
+
+.entry-calendar__hint {
+  margin-top: var(--space-3);
+}
+
 .search-field {
   width: min(260px, 100%);
 }
@@ -1580,6 +1765,16 @@ textarea {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .entries-overview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .entry-calendar {
+    width: min(100%, 320px);
+    justify-self: end;
+  }
 }
 
 @container page-content (max-width: 799px) {
@@ -1928,6 +2123,11 @@ textarea {
   .filter-bar {
     align-items: stretch;
     flex-wrap: wrap;
+  }
+
+  .entry-calendar {
+    width: 100%;
+    max-width: none;
   }
 
   .report-toolbar {

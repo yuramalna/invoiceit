@@ -557,7 +557,7 @@ export default function App() {
             <EntriesScreen
               clients={clients}
               entries={entries}
-              onAdd={() => setDialog({ type: 'entry', entry: null })}
+              onAdd={(initialDate) => setDialog({ type: 'entry', entry: null, initialDate })}
               onDuplicate={(entry) => setDialog({ type: 'entry', entry, duplicate: true })}
               onEdit={(entry) => setDialog({ type: 'entry', entry })}
               onDelete={deleteEntry}
@@ -609,6 +609,7 @@ export default function App() {
         <EntryDialog
           entry={dialog.entry}
           duplicate={dialog.duplicate}
+          initialDate={dialog.initialDate}
           clients={clients}
           defaultBillable={settings.defaultBillable}
           onClose={() => setDialog(null)}
