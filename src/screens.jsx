@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import InvoiceDocument from './InvoiceDocument.jsx';
 import Pagination, { pageCount, pageSlice } from './Pagination.jsx';
 import { CURRENCY_OPTIONS } from './data.js';
@@ -85,7 +86,7 @@ function calendarMonthDays(month) {
   });
 }
 
-function EntryCalendar({ entries, tab, onSelectDate }) {
+function EntryCalendar({ entries, tab, onSelectDate, variant = 'inline' }) {
   const [month, setMonth] = React.useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -122,7 +123,7 @@ function EntryCalendar({ entries, tab, onSelectDate }) {
   };
 
   return (
-    <section className="entry-calendar" aria-label="Entry activity calendar">
+    <section className={`entry-calendar entry-calendar--${variant}`} aria-label="Entry activity calendar">
       <header className="entry-calendar__header">
         <div>
           <h2>{formatDate(month, { month: 'long', year: 'numeric' })}</h2>
@@ -180,6 +181,20 @@ function EntryCalendar({ entries, tab, onSelectDate }) {
       </div>
       <p className="entry-calendar__hint">Marked days contain entries in the current view. Select a date to add work.</p>
     </section>
+  );
+}
+
+function SidebarEntryCalendar({ entries, tab, onSelectDate }) {
+  const [mountNode, setMountNode] = React.useState(null);
+
+  React.useEffect(() => {
+    setMountNode(document.getElementById('entry-calendar-sidebar'));
+  }, []);
+
+  if (!mountNode) return null;
+  return createPortal(
+    <EntryCalendar entries={entries} tab={tab} onSelectDate={onSelectDate} variant="sidebar" />,
+    mountNode,
   );
 }
 
@@ -577,56 +592,54 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
 
   return (
     <div className="screen-stack">
-      <div className="entries-overview">
-        <div className="entries-overview__filters">
-          <Tabs
-            value={tab}
-            onChange={setTab}
-            tabs={[
-              { value: 'all', label: 'All', count: entries.length },
-              { value: 'unbilled', label: 'Unbilled', count: entries.filter((entry) => entry.billable && !entry.invoiced).length },
-              { value: 'invoiced', label: 'Invoiced', count: entries.filter((entry) => entry.invoiced).length },
-            ]}
+      <SidebarEntryCalendar entries={filtered} tab={tab} onSelectDate={onAdd} />
+      <div className="entries-inline-calendar">
+        <EntryCalendar entries={filtered} tab={tab} onSelectDate={onAdd} variant="inline" />
+      </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: 'all', label: 'All', count: entries.length },
+          { value: 'unbilled', label: 'Unbilled', count: entries.filter((entry) => entry.billable && !entry.invoiced).length },
+          { value: 'invoiced', label: 'Invoiced', count: entries.filter((entry) => entry.invoiced).length },
+        ]}
+      />
+      <div className="filter-bar">
+        <div className="search-field">
+          <Input
+            icon="Search"
+            aria-label="Search tasks and notes"
+            placeholder="Search tasks and notes"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
           />
-          <p>Review the ledger below or choose a calendar date to add work.</p>
-          <div className="filter-bar">
-            <div className="search-field">
-              <Input
-                icon="Search"
-                aria-label="Search tasks and notes"
-                placeholder="Search tasks and notes"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </div>
-            <Select
-              aria-label="Filter by client"
-              value={clientFilter}
-              onChange={(event) => setClientFilter(event.target.value)}
-              options={[{ value: 'all', label: 'All clients' }, ...clients.map((client) => ({ value: client.id, label: client.name }))]}
-            />
-            <Select
-              aria-label="Filter by project"
-              value={projectFilter}
-              onChange={(event) => setProjectFilter(event.target.value)}
-              options={[{ value: 'all', label: 'All projects' }, ...projectOptions]}
-            />
-            <div className="filter-bar__actions">
-              <Button size="sm" icon="Download" onClick={exportCsv}>Export CSV</Button>
-              <Button size="sm" variant="secondary" icon="Plus" onClick={() => onAdd()}>Add entry</Button>
-              <Button
-                size="sm"
-                variant="primary"
-                icon="Receipt"
-                disabled={!selected.length}
-                onClick={() => onInvoice(selected)}
-              >
-                Invoice {selected.length ? selected.length : 'selection'}
-              </Button>
-            </div>
-          </div>
         </div>
-        <EntryCalendar entries={filtered} tab={tab} onSelectDate={onAdd} />
+        <Select
+          aria-label="Filter by client"
+          value={clientFilter}
+          onChange={(event) => setClientFilter(event.target.value)}
+          options={[{ value: 'all', label: 'All clients' }, ...clients.map((client) => ({ value: client.id, label: client.name }))]}
+        />
+        <Select
+          aria-label="Filter by project"
+          value={projectFilter}
+          onChange={(event) => setProjectFilter(event.target.value)}
+          options={[{ value: 'all', label: 'All projects' }, ...projectOptions]}
+        />
+        <div className="filter-bar__actions">
+          <Button size="sm" icon="Download" onClick={exportCsv}>Export CSV</Button>
+          <Button size="sm" variant="secondary" icon="Plus" onClick={() => onAdd()}>Add entry</Button>
+          <Button
+            size="sm"
+            variant="primary"
+            icon="Receipt"
+            disabled={!selected.length}
+            onClick={() => onInvoice(selected)}
+          >
+            Invoice {selected.length ? selected.length : 'selection'}
+          </Button>
+        </div>
       </div>
       <div className="paginated-list">
         <div className="table-scroll entries-table">

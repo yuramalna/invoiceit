@@ -9,6 +9,7 @@ import {
   formatDate,
   formatDecimalHours,
   formatMoney,
+  formatTime,
   getBillingProfile,
   getClient,
   getProject,
@@ -33,7 +34,7 @@ function combineDateTime(date, time) {
   return new Date(`${date}T${time}:00`).toISOString();
 }
 
-export function EntryDialog({ entry, duplicate = false, initialDate, clients, defaultBillable, onClose, onSave }) {
+export function EntryDialog({ entry, duplicate = false, initialDate, clients, entries = [], defaultBillable, onClose, onSave }) {
   const firstClient = getClient(clients, entry?.clientId) || clients[0];
   const [form, setForm] = React.useState(() => ({
     clientId: entry?.clientId || firstClient?.id || '',
@@ -50,6 +51,10 @@ export function EntryDialog({ entry, duplicate = false, initialDate, clients, de
   const client = getClient(clients, form.clientId) || clients[0];
   const project = getProject(clients, form.clientId, form.projectId) || client?.projects[0];
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const dayEntries = entries
+    .filter((item) => localDate(item.start) === form.date && (duplicate || item.id !== entry?.id))
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+  const daySeconds = dayEntries.reduce((sum, item) => sum + entrySeconds(item), 0);
 
   const save = () => {
     if (!form.task.trim()) {
@@ -138,6 +143,42 @@ export function EntryDialog({ entry, duplicate = false, initialDate, clients, de
           <Input numeric align="right" prefix="$" value={Number(project?.rate || 0).toFixed(2)} disabled />
         </Field>
       </div>
+      <section className="day-work-summary" aria-label={`Work already logged on ${formatDate(form.date)}`}>
+        <header className="day-work-summary__header">
+          <div>
+            <strong>{entry && !duplicate ? 'Other work this day' : 'Already logged this day'}</strong>
+            <span>{formatDate(form.date, { weekday: 'long', day: '2-digit', month: 'short' })}</span>
+          </div>
+          <div className="day-work-summary__total">
+            <strong>{formatDecimalHours(daySeconds)} h</strong>
+            <span>{dayEntries.length} {dayEntries.length === 1 ? 'entry' : 'entries'}</span>
+          </div>
+        </header>
+        {dayEntries.length ? (
+          <div className="day-work-summary__list">
+            {dayEntries.map((item) => {
+              const itemClient = getClient(clients, item.clientId);
+              const itemProject = getProject(clients, item.clientId, item.projectId);
+              return (
+                <div className="day-work-summary__row" key={item.id}>
+                  <span className="day-work-summary__identity">
+                    <strong title={item.task}>{item.task}</strong>
+                    <small>{itemClient?.name || 'Unknown client'} · {itemProject?.name || 'Unknown project'}</small>
+                  </span>
+                  <span className="day-work-summary__time">
+                    {formatTime(item.start)}–{item.running ? 'now' : formatTime(item.end)}
+                  </span>
+                  <strong className="day-work-summary__hours">{formatDecimalHours(entrySeconds(item))} h</strong>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="day-work-summary__empty">
+            {entry && !duplicate ? 'No other work is logged on this date.' : 'No work is logged on this date yet.'}
+          </p>
+        )}
+      </section>
       <Field label="Note" optional hint="Shown in the detailed time log">
         <Input
           multiline

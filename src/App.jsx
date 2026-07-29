@@ -529,12 +529,15 @@ export default function App() {
         value={view}
         onChange={setView}
         footer={
-          <div className="sidebar-footer">
-            <span className="sidebar-storage">sqlite · {connection.sync}</span>
-            <Tooltip label="Settings">
-              <IconButton icon="Settings" size="sm" label="Settings" onClick={() => setView('settings')} />
-            </Tooltip>
-          </div>
+          <>
+            <div id="entry-calendar-sidebar" className="sidebar-calendar-slot" />
+            <div className="sidebar-footer">
+              <span className="sidebar-storage">sqlite · {connection.sync}</span>
+              <Tooltip label="Settings">
+                <IconButton icon="Settings" size="sm" label="Settings" onClick={() => setView('settings')} />
+              </Tooltip>
+            </div>
+          </>
         }
       />
       <main className="app-main" id="main-content">
@@ -611,6 +614,7 @@ export default function App() {
           duplicate={dialog.duplicate}
           initialDate={dialog.initialDate}
           clients={clients}
+          entries={entries}
           defaultBillable={settings.defaultBillable}
           onClose={() => setDialog(null)}
           onSave={saveEntry}
