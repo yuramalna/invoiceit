@@ -555,6 +555,21 @@ textarea {
   overflow: hidden;
 }
 
+.entry-select-all {
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.entry-select-all .hrs-check__box {
+  margin-top: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+}
+
 .client-cell,
 .table-task,
 .project-cell,
@@ -1733,6 +1748,11 @@ textarea {
   margin-right: auto;
 }
 
+.invoice-picker-project {
+  width: 176px;
+  flex: 0 0 auto;
+}
+
 .invoice-picker-toolbar__count {
   color: var(--text-muted);
   font-family: var(--font-mono);
@@ -2455,6 +2475,10 @@ textarea {
   .invoice-picker-search {
     width: 100%;
     flex-basis: 100%;
+  }
+
+  .invoice-picker-project {
+    width: min(100%, 220px);
   }
 
   .invoice-picker-toolbar__count {

@@ -431,15 +431,20 @@ export function InvoiceDialog({
   const [showEntryDates, setShowEntryDates] = React.useState(invoice?.showEntryDates !== false);
   const [error, setError] = React.useState('');
   const [taskQuery, setTaskQuery] = React.useState('');
+  const [taskProjectFilter, setTaskProjectFilter] = React.useState('all');
   const [taskPage, setTaskPage] = React.useState(1);
-  const taskPageSize = 8;
+  const [taskPageSize, setTaskPageSize] = React.useState(8);
   const client = getClient(clients, clientId);
   const billingProfile = getBillingProfile(settings, billingProfileId);
   const clientEntries = eligible
     .filter((entry) => entry.clientId === clientId)
     .sort((a, b) => new Date(b.start) - new Date(a.start));
+  const invoiceProjectOptions = (client?.projects || [])
+    .filter((project) => clientEntries.some((entry) => entry.projectId === project.id))
+    .map((project) => ({ value: project.id, label: project.name }));
   const matchingEntries = clientEntries.filter((entry) => {
     const project = getProject(clients, entry.clientId, entry.projectId);
+    if (taskProjectFilter !== 'all' && entry.projectId !== taskProjectFilter) return false;
     return `${entry.task} ${entry.description || ''} ${project?.name || ''}`
       .toLowerCase()
       .includes(taskQuery.trim().toLowerCase());
@@ -448,10 +453,11 @@ export function InvoiceDialog({
   const pagedEntries = pageSlice(matchingEntries, Math.min(taskPage, taskPages), taskPageSize);
   React.useEffect(() => {
     setPicked((current) => current.filter((id) => clientEntries.some((entry) => entry.id === id)));
+    setTaskProjectFilter('all');
   }, [clientId]);
   React.useEffect(() => {
     setTaskPage(1);
-  }, [clientId, taskQuery]);
+  }, [clientId, taskQuery, taskProjectFilter, taskPageSize]);
   React.useEffect(() => {
     setTaskPage((current) => Math.min(current, taskPages));
   }, [taskPages]);
@@ -635,6 +641,20 @@ export function InvoiceDialog({
                       onChange={(event) => setTaskQuery(event.target.value)}
                     />
                   </div>
+                  {invoiceProjectOptions.length > 1 ? (
+                    <div className="invoice-picker-project">
+                      <Select
+                        size="sm"
+                        aria-label="Filter invoice tasks by project"
+                        value={taskProjectFilter}
+                        onChange={(event) => setTaskProjectFilter(event.target.value)}
+                        options={[
+                          { value: 'all', label: 'All projects' },
+                          ...invoiceProjectOptions,
+                        ]}
+                      />
+                    </div>
+                  ) : null}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -678,6 +698,8 @@ export function InvoiceDialog({
                   total={matchingEntries.length}
                   label="tasks"
                   onPageChange={setTaskPage}
+                  onPageSizeChange={setTaskPageSize}
+                  pageSizeOptions={[8, 25, 50, 100, 'all']}
                 />
               </>
             ) : (

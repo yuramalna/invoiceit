@@ -65,4 +65,8 @@ The Entries calendar is a compact month ledger, not a scheduling surface. On des
 
 Entry forms preserve day context. A compact “already logged” ledger beneath the form lists the selected date’s existing tasks, time spans, and hours, with a daily total that updates whenever the date field changes. Editing excludes the current record from that context; duplication keeps the source visible because it would become an additional record.
 
+Pagination supports 10, 25, 50, 100, and All where a ledger can grow indefinitely. The Entries header checkbox selects the current visible page; choosing All first therefore selects the complete filtered result without surprising users by silently selecting records on unseen pages.
+
+The invoice tracked-time picker keeps its compact eight-row default but can expand to 25, 50, 100, or All. Its optional project filter appears only when the selected client has eligible time in more than one project, and “Select page” always follows the currently visible search and project result.
+
 The report’s Work completed ledger follows the same read pattern as Entries: consistent Date, Task, Client, Project, Hours, and Amount columns; two-way sorting; pagination; and visible-page totals. It remains read-only and inherits the report-level period and client filters.

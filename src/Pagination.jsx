@@ -6,12 +6,15 @@ const {
 } = window.HoursDesignSystem_76f0a9;
 
 export function pageCount(total, pageSize) {
-  return Math.max(1, Math.ceil(total / pageSize));
+  if (pageSize === 'all') return 1;
+  return Math.max(1, Math.ceil(total / Math.max(1, Number(pageSize) || 1)));
 }
 
 export function pageSlice(items, page, pageSize) {
-  const start = (page - 1) * pageSize;
-  return items.slice(start, start + pageSize);
+  if (pageSize === 'all') return items;
+  const resolvedPageSize = Math.max(1, Number(pageSize) || 1);
+  const start = (page - 1) * resolvedPageSize;
+  return items.slice(start, start + resolvedPageSize);
 }
 
 export default function Pagination({
@@ -21,14 +24,15 @@ export default function Pagination({
   label = 'items',
   onPageChange,
   onPageSizeChange,
-  pageSizeOptions = [10, 25, 50],
+  pageSizeOptions = [10, 25, 50, 100, 'all'],
 }) {
   if (!total) return null;
 
+  const resolvedPageSize = pageSize === 'all' ? total : Math.max(1, Number(pageSize) || 1);
   const totalPages = pageCount(total, pageSize);
   const safePage = Math.min(Math.max(1, page), totalPages);
-  const first = ((safePage - 1) * pageSize) + 1;
-  const last = Math.min(safePage * pageSize, total);
+  const first = ((safePage - 1) * resolvedPageSize) + 1;
+  const last = Math.min(safePage * resolvedPageSize, total);
 
   return (
     <nav className="pagination" aria-label={`${label} pagination`}>
@@ -43,8 +47,13 @@ export default function Pagination({
               size="sm"
               aria-label={`${label} per page`}
               value={String(pageSize)}
-              onChange={(event) => onPageSizeChange(Number(event.target.value))}
-              options={pageSizeOptions.map((value) => ({ value: String(value), label: String(value) }))}
+              onChange={(event) => onPageSizeChange(
+                event.target.value === 'all' ? 'all' : Number(event.target.value),
+              )}
+              options={pageSizeOptions.map((value) => ({
+                value: String(value),
+                label: value === 'all' ? 'All' : String(value),
+              }))}
             />
           </label>
         ) : null}

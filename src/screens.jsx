@@ -32,6 +32,7 @@ const {
   Duration,
   EmptyState,
   Field,
+  Icon,
   IconButton,
   Input,
   ProgressBar,
@@ -43,6 +44,27 @@ const {
   TimeEntryRow,
   Timer,
 } = window.HoursDesignSystem_76f0a9;
+
+function PageSelectionCheckbox({ allSelected, someSelected, onChange }) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={allSelected ? 'true' : someSelected ? 'mixed' : 'false'}
+      aria-label="Select all entries on this page"
+      className={[
+        'hrs-check',
+        allSelected || someSelected ? 'hrs-check--on' : '',
+        'entry-select-all',
+      ].join(' ')}
+      onClick={() => onChange(!allSelected)}
+    >
+      <span className="hrs-check__box" aria-hidden="true">
+        {allSelected ? <Icon name="Check" size={11} strokeWidth={2.5} /> : someSelected ? '−' : null}
+      </span>
+    </button>
+  );
+}
 
 function viewEntry(entry, clients) {
   const client = getClient(clients, entry.clientId);
@@ -493,9 +515,29 @@ export function EntriesScreen({ clients, entries, onAdd, onDuplicate, onEdit, on
     ...viewEntry(entry, clients),
     __entry: entry,
   }));
+  const pageEntryIds = pagedEntries.map((entry) => entry.id);
+  const selectedOnPage = pageEntryIds.filter((id) => selected.includes(id)).length;
+  const allPageSelected = pageEntryIds.length > 0 && selectedOnPage === pageEntryIds.length;
+  const somePageSelected = selectedOnPage > 0;
+  const togglePageSelection = (checked) => {
+    setSelected((current) => checked
+      ? [...new Set([...current, ...pageEntryIds])]
+      : current.filter((id) => !pageEntryIds.includes(id)));
+  };
 
   const columns = [
-    { key: 'pick', label: '', width: 46, sortable: false },
+    {
+      key: 'pick',
+      label: (
+        <PageSelectionCheckbox
+          allSelected={allPageSelected}
+          someSelected={somePageSelected}
+          onChange={togglePageSelection}
+        />
+      ),
+      width: 46,
+      sortable: false,
+    },
     { key: 'date', label: 'Date', width: 104 },
     { key: 'task', label: 'Task' },
     { key: 'client', label: 'Client', width: 136 },
