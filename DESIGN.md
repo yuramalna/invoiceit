@@ -59,6 +59,8 @@ Entry duplication is review-first: “Duplicate” opens a prefilled new-entry d
 
 Work dates are a per-invoice presentation option and default to visible. They appear as a compact Date column for tracked-time rows in both preview and print; web-only navigation controls, including the skip link, are always excluded from printed invoices.
 
+Invoice downloads make the document purpose explicit. The PDF action first offers the full invoice or a time report. Time reports preserve the invoice's historical sender identity and service period, then show only dated tracked work, project context, hours, and total hours; billing parties, payment accounts, rates, amounts, taxes, and non-time items remain exclusive to the invoice.
+
 Entry forms protect in-progress work: backdrop clicks do not dismiss add, edit, or duplicate dialogs, while the explicit close and Cancel actions remain available. The entries ledger keeps Client and Project as separate sortable fields, supports both filters, and summarizes only the currently visible page. Monetary page totals stay grouped by currency instead of combining unlike currencies.
 
 The Entries calendar is a compact month ledger, not a scheduling surface. On desktop it belongs to the lower sidebar so the work ledger remains an uninterrupted reading surface; below the desktop navigation breakpoint it returns inline above the ledger controls. It mirrors the active tab, search, client, and project filters; filled dates use a restrained activity mark whose length reflects logged time within the visible month. Month navigation stays local to the calendar. Selecting any date begins a new entry with that date prefilled.

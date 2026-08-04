@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import InvoiceDocument from './InvoiceDocument.jsx';
+import TimeReportDocument from './TimeReportDocument.jsx';
 import Pagination, { pageCount, pageSlice } from './Pagination.jsx';
 import { CURRENCY_OPTIONS } from './data.js';
 import {
@@ -29,6 +30,7 @@ const {
   Card,
   Checkbox,
   DataTable,
+  Dialog,
   Duration,
   EmptyState,
   Field,
@@ -820,6 +822,7 @@ export function InvoicesScreen({
   const [selectedId, setSelectedId] = React.useState(invoices[0]?.id);
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
+  const [downloadOpen, setDownloadOpen] = React.useState(false);
   React.useEffect(() => {
     if (!invoices.some((invoice) => invoice.id === selectedId)) setSelectedId(invoices[0]?.id);
   }, [invoices, selectedId]);
@@ -890,6 +893,27 @@ export function InvoicesScreen({
 
   const exportAll = () => {
     downloadFile(`hours-invoices-${dateKey(new Date())}.json`, JSON.stringify(invoices, null, 2), 'application/json');
+  };
+
+  const printDocument = (kind) => {
+    setDownloadOpen(false);
+    document.body.dataset.printDocument = kind;
+    const cleanup = () => {
+      window.clearTimeout(cleanupFallback);
+      delete document.body.dataset.printDocument;
+      window.removeEventListener('afterprint', cleanup);
+    };
+    const cleanupFallback = window.setTimeout(cleanup, 60_000);
+    window.addEventListener('afterprint', cleanup);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        try {
+          window.print();
+        } catch {
+          cleanup();
+        }
+      });
+    });
   };
 
   return (
@@ -985,9 +1009,41 @@ export function InvoicesScreen({
             onStatusChange={(status) => onStatus(selected.id, status)}
             onEdit={() => onEdit(selected)}
             onDelete={() => onDelete(selected)}
-            onPrint={() => window.print()}
+            onPrint={() => setDownloadOpen(true)}
+          />
+          <TimeReportDocument
+            invoice={selected}
+            entries={entries}
+            clients={clients}
+            settings={settings}
           />
         </aside>
+      ) : null}
+      {downloadOpen && selected ? (
+        <Dialog
+          title="Download PDF"
+          subtitle={`Choose a document for invoice #${selected.number}`}
+          onClose={() => setDownloadOpen(false)}
+        >
+          <div className="document-download-options">
+            <button type="button" className="document-download-option" onClick={() => printDocument('invoice')}>
+              <Icon name="Receipt" size={20} />
+              <span>
+                <strong>Invoice</strong>
+                <small>Full billing document with rates, amounts, parties, and payment details.</small>
+              </span>
+              <Icon name="ChevronRight" size={17} />
+            </button>
+            <button type="button" className="document-download-option" onClick={() => printDocument('time-report')}>
+              <Icon name="Clock" size={20} />
+              <span>
+                <strong>Time report</strong>
+                <small>Work dates, descriptions, projects, hours, and total hours only.</small>
+              </span>
+              <Icon name="ChevronRight" size={17} />
+            </button>
+          </div>
+        </Dialog>
       ) : null}
     </div>
   );
